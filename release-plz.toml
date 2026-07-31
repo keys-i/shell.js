@@ -1,0 +1,22 @@
+[workspace]
+changelog_update = true
+git_only = true
+git_release_enable = true
+git_release_name = "Hatch Koala · v{{ version }}"
+git_release_body = """
+{{ changelog }}
+
+Classic browser build:
+`https://cdn.jsdelivr.net/gh/keys-i/shell.js@v{{ version }}/javascripts/shell.min.js`
+"""
+git_release_type = "auto"
+git_tag_enable = true
+git_tag_name = "v{{ version }}"
+pr_name = "chore: release Hatch Koala · v{{ version }}"
+publish = false
+release_always = false
+semver_check = true
+
+[[package]]
+name = "shell-js"
+changelog_path = "docs/CHANGELOG.md"

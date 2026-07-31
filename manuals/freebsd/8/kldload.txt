@@ -1,0 +1,79 @@
+KLDLOAD(8)                  System Manager's Manual                 KLDLOAD(8)
+
+NAME
+     kldload – load a file into the kernel
+
+SYNOPSIS
+     kldload [-nqv] file ...
+
+DESCRIPTION
+     The kldload utility loads file.ko into the kernel using the kernel
+     linker.  Note that if multiple modules are specified then an attempt will
+     be made to load them all, even if some fail.  The .ko extension name is
+     not mandatory when loading a given module using kldload.  It does not
+     hurt to specify it though.
+
+     If a bare filename is requested it will only be loaded if it is found
+     within the module path as defined by the sysctl kern.module_path.  To
+     load a module from the current directory it must be specified as a full
+     or relative path.  The kldload utility will warn if a module is requested
+     as a bare filename and is present in the current directory.
+
+     The following options are available:
+
+     -n      Do not try to load module if already loaded.
+
+     -v      Be more verbose.
+
+     -q      Silence any extraneous warnings.
+
+NOTES
+     The kernel security level settings may prevent a module from being loaded
+     or unloaded by giving Operation not permitted.
+
+FILES
+     /boot/kernel  directory containing loadable modules.  Modules must have
+                   an extension of .ko.
+
+EXIT STATUS
+     The kldload utility exits 0 on success, and >0 if an error occurs.
+
+EXAMPLES
+     To load by module name:
+
+           > kldload foo
+
+     To load by file name within the module path:
+
+           > kldload foo.ko
+
+     To load by relative path:
+
+           > kldload ./foo.ko
+
+     To load by full path:
+
+           > kldload /boot/kernel/foo.ko
+
+AUTOMATICALLY LOADING MODULES
+     Some modules (pf, ipfw, ipf, etc.) may be automatically loaded at boot
+     time when the corresponding rc.conf(5) statement is used.  Modules may
+     also be auto-loaded through their addition to loader.conf(5) or kld_list
+     in rc.conf(5).
+
+     Only those modules necessary for booting the system, including those
+     required for mounting the root filesystem, should be handled by
+     loader.conf(5).
+
+SEE ALSO
+     kenv(1), kldload(2), loader.conf(5), rc.conf(5), security(7),
+     kldconfig(8), kldstat(8), kldunload(8), kldxref(8)
+
+HISTORY
+     The kldload utility first appeared in FreeBSD 3.0, replacing the lkm
+     interface.
+
+AUTHORS
+     Doug Rabson <dfr@FreeBSD.org>
+
+macOS 26.5                     December 20, 2023                    macOS 26.5
