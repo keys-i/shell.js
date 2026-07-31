@@ -1,0 +1,155 @@
+{
+  "profiles": {
+    "freebsd": {
+      "release": "14.2-RELEASE-p4",
+      "origin": "https://cgit.freebsd.org/src",
+      "revision": "d9352700f9357aa170c1e4dc144537998ec66025",
+      "pages": [
+        {
+          "name": "cat",
+          "section": "1",
+          "path": "bin/cat/cat.1",
+          "sha256": "4096d2b88041a43f70d94f9fcaa435566409860e536fcbad7452fe766276df45"
+        },
+        {
+          "name": "ddb",
+          "section": "4",
+          "path": "share/man/man4/ddb.4",
+          "sha256": "38c8880df3eab1f5bb080d601591320413118927d78d2b86393f81fa16145699"
+        },
+        {
+          "name": "dmesg",
+          "section": "8",
+          "path": "sbin/dmesg/dmesg.8",
+          "sha256": "08f2f4f5db915ba7f6e002a19fa518b505b6ad077578b405d5aab6aa83cbfff3"
+        },
+        {
+          "name": "hier",
+          "section": "7",
+          "path": "share/man/man7/hier.7",
+          "sha256": "83de462877ce9aa624a3c924f7895256fcc12fac9abe190e3c14dc70d7583302"
+        },
+        {
+          "name": "kldload",
+          "section": "8",
+          "path": "sbin/kldload/kldload.8",
+          "sha256": "6f655d732b1d2a74390871bd567e475aeaa7afcef479a7a85bf07d1dda0bbc6e"
+        },
+        {
+          "name": "ls",
+          "section": "1",
+          "path": "bin/ls/ls.1",
+          "sha256": "3c1d2a8747510dbf1c29fe0a53a6dc69e903d19082a6a0731f1200a5691fb70e"
+        },
+        {
+          "name": "man",
+          "section": "1",
+          "path": "usr.bin/man/man.1",
+          "sha256": "b9137ffa8bcdcfc40ad895f0e71c4b67b0516d14031db3cca49bb8bcbb073e19"
+        },
+        {
+          "name": "panic",
+          "section": "9",
+          "path": "share/man/man9/panic.9",
+          "sha256": "b7090a7b914a1093aff687935b35e68e217118bcceebdde84d1dc13eef8abee6"
+        },
+        {
+          "name": "sh",
+          "section": "1",
+          "path": "bin/sh/sh.1",
+          "sha256": "115513eeddf5e2ab7d5a540e86010fc78301c47576aaebeb27f04b41e724106d"
+        },
+        {
+          "name": "sysctl",
+          "section": "8",
+          "path": "sbin/sysctl/sysctl.8",
+          "sha256": "bf07c860f44f5bace3396bd174a1b6163d837bd0ca8577f1c5b480437d12ab87"
+        },
+        {
+          "name": "uname",
+          "section": "1",
+          "path": "usr.bin/uname/uname.1",
+          "sha256": "afb910cf0dfed9da66937967b6facc9c392dd1c844ed43dce41bb8e444b6820c"
+        }
+      ]
+    },
+    "linux": {
+      "release": "man-pages-6.18",
+      "origin": "https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git",
+      "revision": "66d786852379759d22c891d70ff9311d9f193fdc",
+      "licenses": [
+        {
+          "name": "GPL-1.0-or-later.txt",
+          "path": "LICENSES/GPL-1.0-or-later.txt",
+          "sha256": "da37ffd5fcdf0a7d76af862a4330ea1076e1443b51782b2f912148357b7acabe"
+        },
+        {
+          "name": "GPL-3.0-or-later.txt",
+          "path": "LICENSES/GPL-3.0-or-later.txt",
+          "sha256": "fb981668c18a279e285fc4d83fba1e836cc84dd4daa73c9697d3cfd2d8aca6e0"
+        },
+        {
+          "name": "Linux-man-pages-copyleft.txt",
+          "path": "LICENSES/Linux-man-pages-copyleft.txt",
+          "sha256": "e7241c6405f8ad70943bcdb0fd83cb79fb25eec601ecf311acc9c72f19794d5a"
+        }
+      ],
+      "pages": [
+        {
+          "name": "clone",
+          "section": "2",
+          "path": "man/man2/clone.2",
+          "sha256": "4a8910f9c8047022cf4ce5c82a000471ba6f9634cf5a9c5dbf0a66b169d65652"
+        },
+        {
+          "name": "execve",
+          "section": "2",
+          "path": "man/man2/execve.2",
+          "sha256": "2728b6951b36660f064331c070a7c1197ad8e13608d34265e608bbeba3e62247"
+        },
+        {
+          "name": "fork",
+          "section": "2",
+          "path": "man/man2/fork.2",
+          "sha256": "3931c5e0da6790a8def5b80a089c19469fc875d18e793f7d3df98958e01676a2"
+        },
+        {
+          "name": "man-pages",
+          "section": "7",
+          "path": "man/man7/man-pages.7",
+          "sha256": "0840b7f2de21befe4864660c4c39007311b36e7316374a2c5d8c66ebb4f8efc8"
+        },
+        {
+          "name": "open",
+          "section": "2",
+          "path": "man/man2/open.2",
+          "sha256": "f1b83f36106f49ad2965f1ed2d853bdf9d04b7ebac5b9a4429475eb8ad943401"
+        },
+        {
+          "name": "proc_pid_status",
+          "section": "5",
+          "path": "man/man5/proc_pid_status.5",
+          "sha256": "b34589df733a25eab62388e39764477a0a525a0932fe70df3c94bb1e7e2c9f1a"
+        },
+        {
+          "name": "read",
+          "section": "2",
+          "path": "man/man2/read.2",
+          "sha256": "4abfbf46e2e5d0e4f7ff44b3db8ee27cb3b141b3c64c3a22dfe0237e7d699c5b"
+        },
+        {
+          "name": "signal",
+          "section": "7",
+          "path": "man/man7/signal.7",
+          "sha256": "57d59f5b0431fc68250ef110d666cc4b515a1f0d80b3badc147f5a4a0521e47c"
+        },
+        {
+          "name": "write",
+          "section": "2",
+          "path": "man/man2/write.2",
+          "sha256": "418a0b8223fde9ce1aacdbd4041f73dca86cbc73af6543562bafcb3c9611da4a"
+        }
+      ]
+    }
+  }
+}

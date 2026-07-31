@@ -1,0 +1,59 @@
+{
+  "name": "@keys-i/shell.js",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A small, safe, embeddable shell engine for the web",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./javascripts/index.js",
+    "./wasm": "./wasm/shell.wasm",
+    "./manuals/*": "./manuals/*"
+  },
+  "files": [
+    "javascripts/commands.js",
+    "javascripts/fs.js",
+    "javascripts/index.js",
+    "javascripts/man.js",
+    "javascripts/parser.js",
+    "javascripts/profiles.js",
+    "javascripts/shell.js",
+    "javascripts/shell.min.js",
+    "javascripts/ui.js",
+    "javascripts/wasm.js",
+    "kernels/lib.rs",
+    "manuals",
+    "docs/MANUAL_SOURCES.md",
+    "wasm/shell.wasm",
+    "Cargo.lock",
+    "Cargo.toml",
+    "LICENSE",
+    "README.md",
+    "rust-toolchain.toml"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/keys-i/shell.js.git"
+  },
+  "bugs": "https://github.com/keys-i/shell.js/issues",
+  "homepage": "https://github.com/keys-i/shell.js#readme",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "benchmark": "node javascripts/benchmark.js",
+    "benchmark:ci": "node javascripts/benchmark.js",
+    "build": "node javascripts/build.js",
+    "format": "biome format --write . && cargo fmt",
+    "format:check": "biome format . && cargo fmt --check",
+    "lint": "biome lint .",
+    "manuals": "node javascripts/manuals.js",
+    "test": "node javascripts/test.js && cargo test",
+    "validate": "npm run lint && npm run format:check && npm test"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.6",
+    "esbuild": "0.28.1"
+  }
+}

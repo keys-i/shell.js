@@ -1,0 +1,495 @@
+HIER(7)                Miscellaneous Information Manual                HIER(7)
+
+NAME
+     hier – index of FreeBSD file system hierarchy
+
+DESCRIPTION
+     /          root directory of the file system
+
+     /COPYRIGHT
+                FreeBSD copyright information
+
+     /bin/      fundamental BSD user utilities; see intro(1)
+
+     /boot/     programs and configurations used during FreeBSD boot(8)
+
+                defaults/       default boot configuration files; see
+                                loader.conf(5)
+                device.hints    kernel variables for controlling drivers; see
+                                device.hints(5)
+                dtb/            compiled flattened device tree (FDT) files;
+                                see fdt(4) and dtc(1)
+
+                                overlays/  compiled fdt(4) overlays; see
+                                           fdt_overlays in loader.conf(5)
+
+                efi/            the uefi(8) EFI System Partition (ESP) mount
+                                point
+                firmware/       loadable binary firmware kernel modules
+                fonts/          binary bitmap console fonts; see
+                                loader.conf(5) and vtfontcvt(8)
+                images/         beastie boot menu images; see loader_lua(8)
+                kernel/         FreeBSD kernel and modules; see kldstat(8)
+                kernel.old/     alternative kernel and modules
+                loader.conf     boot loader configuration; see loader.conf(5)
+                loader.conf.d/  loader.conf(5) configuration files
+                lua/            scripts for the Lua boot loader; see
+                                loader_lua(8)
+                modules/        third-party loadable kernel modules, such as
+                                those installed with pkg(8) or from ports(7)
+                zfs/            ZFS zpool(8) cache files
+
+     /compat/   files supporting binary compatibility with other operating
+                systems
+
+                linux/         default location for linux(4) compatibility
+                               run-time
+
+     /dev/      device nodes and special files; see intro(4) and devfs(5)
+
+                ada0           first ATA storage device
+                ada0p1         first partition on ada0
+                cd0            first optical drive
+                cuaU0          first USB serial port; see cu(1)
+                da0            first SCSI storage device
+                da0s1          first partition on da0
+                dri/           GPU character device nodes; see drm(7)
+                drm/           GPU drm(7) special files
+                fd/            file descriptor files; see fd(4)
+                fd0            first floppy drive
+                mmcsd0         first SD storage device
+                mmcsd0s1       first partition on mmcsd0
+                nda0           first NVMe storage device attached via cam(3)
+                null           infinite loop that accepts anything and
+                               contains nothing
+                nvd0           first NVMe storage device using NVMe namespaces
+                pts/           pseduo-terminals; see pts(4)
+                random         source of weak randomness; see random(4)
+                sa0            first tape drive
+                usb/           USB busses
+                vmm/           active bhyve(8) virtual machines
+                zvol/          zfs(8) volumes
+
+     /entropy   provides initial state to RNG; see save-entropy(8)
+
+     /etc/      base system configuration files and scripts; see intro(5)
+
+                auto_master          autofs automount(8) configuration
+                bluetooth/           bluetooth configuration files
+                cron.d/              tables for driving scheduled tasks; see
+                                     crontab(5)
+                crontab              root's cron table
+                defaults/            default system configuration files; see
+                                     rc(8)
+                devd/                configuration for devd(8), the device
+                                     state change daemon
+                devfs.conf           boot time device configuration
+                dma/                 configuration for dma(8)
+                freebsd-update.conf  configuration for the base system
+                                     updater; see freebsd-update(8)
+                fstab                static filesystem configuration; see
+                                     fstab(5)
+                hosts                database of local hosts if no network
+                                     name server is running
+                inetd.conf           configuration for BSD heritage internet
+                                     servers; see inetd(8)
+                localtime            local timezone information; see ctime(3)
+                jail.conf.d/         jail(8) startup scripts
+                login.conf           login class capability database; see
+                                     login.conf(5)
+                machine-id           defines the UUID for the local system,
+                                     required for dbus
+                mail/                sendmail(8) control files
+
+                                     aliases      addresses to deliver system
+                                                  mail
+                                     mailer.conf  mailwrapper(8) configuration
+
+                motd.template        message displayed upon tty login; see
+                                     motd(5)
+                mtree/               system mapper specification; see mtree(8)
+                newsyslog.conf.d/    log rotation configuration files.
+                ntp/                 stored time for the Network Time Protocol
+                ntp.conf             configuration for the NTP client, ntpd(8)
+                pam.d/               configuration files for the Pluggable
+                                     Authentication Modules (PAM) library; see
+                                     pam(3)
+                periodic/            scripts that are run daily, weekly, or
+                                     monthly by cron(8); see periodic(8)
+                pf.conf              configuration for the Packet Filter
+                                     firewall; see pf(4)
+                pkg/                 default configuration for the package
+                                     manager, pkg(8)
+                ppp/                 PPP configuration files; see ppp(8)
+                rc.conf              system and daemon configuration; see
+                                     rc.conf(5)
+                rc.d/                system and daemon startup/control
+                                     scripts; see rc(8)
+                resolv.conf          DNS configuration; see resolv.conf(5)
+                resolvconf.conf      DNS configuration manager configuration,
+                                     often generated by local-unbound; see
+                                     local-unbound(8) or resolvconf(8)
+                security/            OpenBSM audit configuration files; see
+                                     audit(8)
+                ssh/                 OpenSSH configuration files; see ssh(1)
+                ssl/                 OpenSSL configuration files
+                sysctl.conf          kernel state defaults; see sysctl.conf(5)
+                syslog.conf          system log configuration
+                ttys                 tty creation configuration; see getty(8)
+                wpa_supplicant.conf  client wifi configuration; see
+                                     wpa_supplicant.conf(5)
+
+     /home/     home directories for users; the typical home for an
+                interactive user beastie would be /home/beastie/
+
+     /lib/      system libraries critical to binaries in /bin and /sbin
+
+                geom/         class-specific libraries for the geom(8) utility
+                nvmecontrol/  vendor-specific libraries to extend the
+                              nvmecontrol(8) utility
+
+     /libexec/  system utilities critical to binaries in /bin and /sbin
+
+     /media/    mount points for removable storage media such as CDs, DVDs,
+                and USB drives; see automount(8), or bsdisks(8) if a using a
+                desktop environment from ports(7)
+
+     /mnt/      empty directory commonly used by system administrators as a
+                temporary mount point
+
+     /net/      automounted NFS shares; see auto_master(5)
+
+     /nonexistent/
+                a non-existent directory; by convention, it serves as a home
+                directory for user accounts that need no home directory; see
+                also /var/empty/
+
+     /proc/     process file system; see procfs(5)
+
+     /rescue/   statically linked programs for emergency recovery; see
+                rescue(8)
+
+     /root/     home directory of the root user
+
+     /sbin/     fundamental BSD system administration utilities; see intro(8)
+
+     /tmp/      temporary files commonly removed between system reboots; see
+                clear_tmp_enable in rc.conf(5)
+
+     /usr/      contains the majority of user utilities and applications
+
+                bin/           common utilities, programming tools, and
+                               applications; see intro(1)
+                freebsd-dist/  distribution files (like base.txz); see
+                               release(7) and bsdinstall(8)
+                include/       standard C include header files
+                lib/           shared and ar(1)-type libraries; see intro(3)
+
+                               clang/      shared libraries for the system
+                                           compiler, clang(1)
+                               compat/     shared libraries for compatibility
+                               debug/      standalone debug data for the
+                                           kernel and base system libraries
+                                           and binaries
+                               dtrace/     dtrace(1) library scripts
+                               engines/    OpenSSL (Cryptography/SSL toolkit)
+                                           dynamically loadable engines
+                               flua/       FreeBSD Lua shared libraries
+                               i18n/       shared libraries for
+                                           internationalization
+
+                lib32/         32-bit compatibility libraries
+                libdata/       miscellaneous utility data files
+
+                               ldscripts/  linker scripts; see ld(1)
+                               pkgconfig/  collections of compiler and linker
+                                           flags for the pkgconf(1)
+                                           development tool
+
+                libexec/       system daemons and utilities executed by
+                               programs
+
+                               bsdconfig/   utilities called by the ncurses
+                                            FreeBSD configuration wizard
+                               bsdinstall/  utilities for bsdinstall(8)
+                               dwatch/      profiles for dwatch(1)
+                               fwget/       utilities called by fwget(8)
+                               hyperv/      scripts for communicating with the
+                                            Hyper-V hypervisor
+                               lpr/         utilities and filters for the line
+                                            printer system; see lpr(1)
+                               sendmail/    the sendmail(8) binary; see
+                                            mailwrapper(8)
+                               sm.bin/      restricted shell for sendmail(8);
+                                            see smrsh(8)
+                               zfs/         Z file system utilities
+
+                local/         local executables, libraries, etc, installed by
+                               pkg(7) or ports(7)
+
+                               bin/        local user utilities, see intro(1)
+                               etc/        local program configurations
+                               include/    local library headers
+                               lib/        local libraries
+                               lib32/      local 32-bit compatability
+                                           libraries
+                               libdata/    local utility data files
+                               libexec/    utilities executed by local
+                                           utilities
+                               sbin/       local administration utilities
+                               share/      local architecture-independent
+                                           files
+                               share/doc/  local documentation
+                               share/doc/freebsd/
+                                           articles, books, FAQ, and handbooks
+                                           available from the FreeBSD project
+                               share/man/  local manual pages; see man(1)
+
+                obj/           architecture-specific target tree produced by
+                               building FreeBSD from source; see build(7)
+                ports/         FreeBSD ports collection; see ports(7)
+                sbin/          system daemons and utilities meant for user
+                               execution; see intro(8)
+                share/         architecture-independent files
+
+                               atf/        scripts for the Automated Testing
+                                           Framework; see ATF(7)
+                               bhyve/      bhyve(8) keyboard mappings
+                               calendar/   system-wide calendar files; see
+                                           calendar(1)
+                               certs/      TLS certificates for openssl(1)
+                               dict/       word lists; see look(1)
+
+                                           freebsd     FreeBSD-specific terms,
+                                                       proper names, and
+                                                       jargon
+                                           web2        words from Webster's
+                                                       Second International
+
+                               doc/        miscellaneous documentation
+                               dtrace/     scripts for the Dynamic Tracing
+                                           Compiler; see dtrace(1)
+                               examples/   various examples for users and
+                                           programmers
+                               firmware/   firmware images loaded by userland
+                                           programs
+                               games/      ASCII text files used by BSD
+                                           heritage games, see intro(6)
+                               keys/       known trusted and revoked keys
+
+                                           pkg/        fingerprints for pkg(7)
+                                                       and pkg(8)
+
+                               locale/     localization files; see
+                                           setlocale(3)
+                               man/        system manual pages; see man(1)
+                               misc/       miscellaneous system-wide files
+
+                                           ascii       chart of the ASCII
+                                                       codepoints
+                                           flowers     the meanings of flowers
+                                           magic       magic numbers used by
+                                                       file(1)
+                                           termcap     terminal
+                                                       characteristics
+                                                       database; see
+                                                       termcap(5)
+
+                               mk/         templates for make; see make(1)
+                               nls/        national language support files
+                               security/   data files for security policies
+                                           such as mac_lomac(4)
+                               sendmail/   sendmail(8) configuration files
+                               skel/       example . (dot) files for new
+                                           accounts
+                               snmp/       MIBs, example files and tree
+                                           definitions for the SNMP daemon
+
+                                           defs/       tree definition files
+                                                       for use with
+                                                       gensnmptree(1)
+                                           mibs/       management Information
+                                                       Base (MIB) files
+
+                               syscons/    syscons(4) files
+
+                                           fonts/      console fonts; see
+                                                       vidcontrol(1) and
+                                                       vidfont(1)
+                                           keymaps/    console keyboard maps;
+                                                       see kbdcontrol(1) and
+                                                       kbdmap(1)
+                                           scrnmaps/   console screen maps
+
+                               sysroot/    files necessary for the -sysroot
+                                           compiler/linker argument to build
+                                           non-native binaries
+
+                                           VERSION/  files for FreeBSD release
+                                                     VERSION; by convention,
+                                                     “VERSION” matches
+                                                     uname(1) -r
+                                           VERSION/MACHINE.MACHINE_ARCH/
+                                                     represent the binary ABI
+                                                     for these files;
+                                                     “MACHINE” matches
+                                                     uname(1) -m;
+                                                     “MACHINE_ARCH” matches
+                                                     uname(1) -p
+
+                               tabset/     tab description files for a variety
+                                           of terminals; used in the termcap
+                                           file; see termcap(5)
+                               vi/         localization support and utilities
+                                           for the vi(1) editor
+                               vt/         files used by the system console;
+                                           see vt(4)
+
+                                           fonts/      console fonts; see
+                                                       vidcontrol(1),
+                                                       vidfont(1), and
+                                                       vtfontcvt(8)
+                                           keymaps/    console keyboard maps;
+                                                       see kbdcontrol(1) and
+                                                       kbdmap(1)
+
+                               zoneinfo/   timezone configuration information;
+                                           see tzfile(5)
+
+                src/           FreeBSD source code; see development(7); the
+                               layout of the source tree is described by the
+                               top-level README.md file
+
+                tests/         the FreeBSD test suite; see tests(7)
+
+     /var/      log, temporary, transient, and spool files
+
+                account/   system accounting files
+
+                           acct    execution accounting file; see acct(5)
+
+                at/        timed command scheduling files; see at(1)
+
+                           jobs/   job files
+                           spool/  output spool files
+
+                audit/     security event audit trail files; see audit(8)
+                authpf/    user shell sessions for authenticating gateways;
+                           see authpf(8)
+                backups/   critical system configuration backups
+                cache/     miscellaneous cache files
+
+                           pkg/    cached packages for pkg(8)
+                           cups/   cached printers for the Common Unix
+                                   Prinitng system; see cups(1)
+
+                crash/     default directory to store kernel crash dumps; see
+                           crash(8) and savecore(8)
+                cron/      files used by cron; see cron(8)
+
+                           tabs/   crontab files; see crontab(5)
+
+                db/        autogenerated system-specific database files
+
+                           etcupdate/       temporary files and log for
+                                            etcupdate(8)
+                           freebsd-update/  downloads and temporary files for
+                                            freebsd-update(8)
+                           pkg/             package database
+
+                empty/     for use by programs that require an empty
+                           directory, used for instance by sshd(8) for
+                           privilege separation
+                games/     status and score files for BSD heritage games
+                heimdal/   Kerberos server databases; see kdc(8)
+                lib/       state information for ported Linux applications
+                log/       system log files
+
+                           Xorg.0.log      Xserver(1) log, if X(7) is
+                                           installed rotates to Xorg.0.log.old
+                           aculog          serial line access log; see cu(1)
+                           auth.log        system authentication log
+                           bsdinstall_log  system installation log
+                           cron            scheduled task log; see cron(8)
+                           cups/           logs for cups(1)
+                           daemon.log      default log for system daemons
+                           devd.log        default log for device state change
+                                           daemon
+                           dmesg.today     system message buffer log, rotates
+                                           to dmesg.yesterday
+                           debug.log       undiscarded debug syslog messages
+                           lpd-errs        logs for the line printer spooler
+                                           daemon; see lpd(8)
+                           maillog         sendmail(8) log, rotates and
+                                           compresses to maillog.0.bz2
+                           messages        general system log; see syslogd(8)
+                           mount.today     currently loaded fstab(5), rotates
+                                           to mount.yesterday
+                           pf.today        packet filter firewall log; see
+                                           pf(4)
+                           pflog           saved packets caught by pflogd(8)
+                           ppp.log         see ppp(8)
+                           security        transcript of events marked with
+                                           the security flag
+                           setuid.today    listing of executable files which
+                                           run with elevated permissions,
+                                           rotates to setuid.yesterday
+                           userlog         logs changes in users or groups
+                           utx.lastlogin   last login log; see getutxent(3)
+                           utx.log         login/logout log; see getutxent(3)
+                           xferlog         default log for ftpd(8)
+
+                mail/      user mailbox files
+                msgs/      system messages database; see msgs(1)
+                preserve/  unused, present for historical reasons
+                quotas/    UFS quota information files
+                run/       files containing information about the operating
+                           system since it was booted
+
+                           bhyve/           bhyve(8) virtual machine
+                                            unix(4)-domain sockets
+                           ppp/             writable by the “network” group
+                                            for command connection sockets;
+                                            see ppp(8)
+                           utx.active       database of current users; see
+                                            getutxent(3)
+                           wpa_supplicant/  IEEE Std. 802.11 wifi run time
+                                            files
+
+                rwho/      information about other systems on the local
+                           network; see rwhod(8), rwho(1), and ruptime(1)
+                spool/     printer and mail system spooling directories
+
+                           clientmqueue/  undelivered submission mail queue;
+                                          see sendmail(8)
+                           cups/          print jobs and temporary files for
+                                          cups(1)
+                           dma/           undelivered mail queue for DragonFly
+                                          Mail Agent; see dma(8)
+                           lock/          serial device locks; see uucplock(3)
+                           lpd/           line printer spooler daemon spool
+                           ftp/           ftp root directory; see ftpd(8)
+                           mqueue/        undelivered mail queue for
+                                          sendmail(8)
+                           output/        line printer spooling directories
+
+                tmp/       temporary files not removed between system reboots
+
+                           vi.recover/  recovery files for the vi(1) editor
+
+                unbound/   files and configuration for unbound(8)
+                yp/        the NIS maps; see yp(8)
+
+NOTES
+     This manual page documents the default FreeBSD file system layout.  The
+     actual hierarchy on a given system is defined at the system
+     administrator's discretion.  A well-maintained installation will include
+     a customized version of this document.
+
+SEE ALSO
+     apropos(1), find(1), grep(1), ls(1), whereis(1), which(1)
+
+HISTORY
+     A hier manual page first appeared in 1979 with Version 7 AT&T UNIX.
+
+macOS 26.5                     October 10, 2024                     macOS 26.5

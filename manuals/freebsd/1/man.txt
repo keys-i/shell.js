@@ -1,0 +1,219 @@
+MAN(1)                      General Commands Manual                     MAN(1)
+
+NAME
+     man – display online manual documentation pages
+
+SYNOPSIS
+     man [-adho] [-t | -w] [-M manpath] [-P pager] [-S mansect]
+         [-m arch[:machine]] [-p [eprtv]] [mansect] page ...
+     man -K regexp ...
+     man -f keyword ...
+     man -k keyword ...
+
+DESCRIPTION
+     The man utility finds and displays online manual documentation pages.  If
+     mansect is provided, man restricts the search to the specific section of
+     the manual.
+
+     The sections of the manual are:
+           1.   FreeBSD General Commands Manual
+           2.   FreeBSD System Calls Manual
+           3.   FreeBSD Library Functions Manual
+           4.   FreeBSD Kernel Interfaces Manual
+           5.   FreeBSD File Formats Manual
+           6.   FreeBSD Games Manual
+           7.   FreeBSD Miscellaneous Information Manual
+           8.   FreeBSD System Manager's Manual
+           9.   FreeBSD Kernel Developer's Manual
+
+     Options that man understands:
+
+     -K regexp
+             Does a full text search in all manual pages.  regexp is a regular
+             expression as understood by “grep -E”.  This option requires
+             mandoc(1).  This is a slow operation.
+
+     -M manpath
+             Forces a specific colon separated manual path instead of the
+             default search path.  See manpath(1).  Overrides the MANPATH
+             environment variable.
+
+     -P pager
+             Use specified pager.  Defaults to “less -sR” if color support is
+             enabled, or “less -s”.  Overrides the MANPAGER environment
+             variable, which in turn overrides the PAGER environment variable.
+
+     -S mansect
+             Restricts manual sections searched to the specified colon
+             delimited list.  Defaults to “1:8:2:3:3lua:n:4:5:6:7:9:l”.
+             Overrides the MANSECT environment variable.
+
+     -a      Display all manual pages instead of just the first found for each
+             page argument.
+
+     -d      Print extra debugging information.  Repeat for increased
+             verbosity.  Does not display the manual page.
+
+     -f      Emulate whatis(1).
+
+     -h      Display short help message and exit.
+
+     -k      Emulate apropos(1).
+
+     -m arch[:machine]
+             Override the default architecture and machine settings allowing
+             lookup of other platform specific manual pages.  See
+             IMPLEMENTATION NOTES for how this option changes the default
+             behavior.  Overrides the MACHINE_ARCH and MACHINE environment
+             variables.
+
+     -o      Force use of non-localized manual pages.  See IMPLEMENTATION
+             NOTES for how locale specific searches work.  Overrides the
+             LC_ALL, LC_CTYPE, and LANG environment variables.
+
+     -p [eprtv]
+             Use the list of given preprocessors before running nroff(1)
+             (ports/textproc/groff) or troff(1) (ports/textproc/groff).  Valid
+             preprocessors arguments:
+
+             e       eqn(1) (ports/textproc/groff)
+             p       pic(1) (ports/textproc/groff)
+             r       refer(1) (ports/textproc/groff)
+             t       tbl(1) (ports/textproc/groff)
+             v       vgrind(1)
+
+             Overrides the MANROFFSEQ environment variable.
+
+     -t      Send manual page source through troff(1) (ports/textproc/groff)
+             allowing transformation of the manual pages to other formats.
+
+     -w      Display the location of the manual page instead of the contents
+             of the manual page.
+
+IMPLEMENTATION NOTES
+   Locale Specific Searches
+     The man utility supports manual pages in different locales.  The search
+     behavior is dictated by the first of three environment variables with a
+     nonempty string: LC_ALL, LC_CTYPE, or LANG.  If set, man will search for
+     locale specific manual pages using the following logic:
+
+           lang_country.charset
+           lang.charset
+           en.charset
+
+     For example, if LC_ALL is set to “ja_JP.eucJP”, man will search the
+     following paths when considering section 1 manual pages in
+     /usr/share/man:
+
+           /usr/share/man/ja_JP.eucJP/man1
+           /usr/share/man/ja.eucJP/man1
+           /usr/share/man/en.eucJP/man1
+           /usr/share/man/man1
+
+   Platform Specific Searches
+     The man utility supports platform specific manual pages.  The search
+     behavior is dictated by the -m option or the MACHINE_ARCH and MACHINE
+     environment variables.  For example, if MACHINE_ARCH is set to “aarch64”
+     and MACHINE is set to “arm64”, man will search the following paths when
+     considering section 4 manual pages in /usr/share/man:
+
+           /usr/share/man/man4/aarch64
+           /usr/share/man/man4/arm64
+           /usr/share/man/man4
+
+   Displaying Specific Manual Files
+     The man utility also supports displaying a specific manual page if passed
+     a path to the file as long as it contains a ‘/’ character.
+
+ENVIRONMENT
+     The following environment variables affect the execution of man:
+
+     LC_ALL, LC_CTYPE, LANG
+                     Used to find locale specific manual pages.  Valid values
+                     can be found by running the locale(1) command.  See
+                     IMPLEMENTATION NOTES for details.  Influenced by the -o
+                     option.
+
+     MACHINE_ARCH, MACHINE
+                     Used to find platform specific manual pages.  If unset,
+                     the output of “sysctl hw.machine_arch” and “sysctl
+                     hw.machine” is used respectively.  See IMPLEMENTATION
+                     NOTES for details.  Corresponds to the -m option.
+
+     MANPATH         The standard search path used by man(1) may be changed by
+                     specifying a path in the MANPATH environment variable.
+                     Invalid paths, or paths without manual databases, are
+                     ignored.  Overridden by -M.  If MANPATH begins with a
+                     colon, it is appended to the default list; if it ends
+                     with a colon, it is prepended to the default list; or if
+                     it contains two adjacent colons, the standard search path
+                     is inserted between the colons.  If none of these
+                     conditions are met, it overrides the standard search
+                     path.
+
+     MANROFFSEQ      Used to determine the preprocessors for the manual source
+                     before running nroff(1) (ports/textproc/groff) or
+                     troff(1) (ports/textproc/groff).  If unset, defaults to
+                     tbl(1) (ports/textproc/groff).  Corresponds to the -p
+                     option.
+
+     MANSECT         Restricts manual sections searched to the specified colon
+                     delimited list.  Corresponds to the -S option.
+
+     MANWIDTH        If set to a numeric value, used as the width manpages
+                     should be displayed.  Otherwise, if set to a special
+                     value “tty”, and output is to a terminal, the pages may
+                     be displayed over the whole width of the screen.
+
+     MANCOLOR        If set, enables color support.
+
+     MANPAGER        Program used to display files.
+
+                     If unset, and color support is enabled, “less -sR” is
+                     used.
+
+                     If unset, and color support is disabled, then PAGER is
+                     used.  If that has no value either, “less -s” is used.
+
+FILES
+     /etc/man.conf
+             System configuration file.
+     /usr/local/etc/man.d/*.conf
+             Local configuration files.
+
+EXIT STATUS
+     The man utility exits 0 on success, and >0 if an error occurs.
+
+EXAMPLES
+     Show the manual page for stat(2):
+
+           $ man 2 stat
+
+     Show all manual pages for ‘stat’.
+
+           $ man -a stat
+
+     List manual pages which match the regular expression either in the title
+     or in the body:
+
+           $ man -k '\<copy\>.*archive'
+
+     Show the manual page for ls(1) and use cat(1) as pager:
+
+           $ man -P cat ls
+
+     Show the location of the ls(1) manual page:
+
+           $ man -w ls
+
+     Show the location of manual pages in sections 1 and 8 which contain the
+     word ‘arm’:
+
+           $ ./man -w -K '\<arm\>' -S 1:8
+
+SEE ALSO
+     apropos(1), egrep(1), intro(1), mandoc(1), manpath(1), whatis(1),
+     intro(2), intro(3), intro(3lua), intro(4), intro(5), man.conf(5),
+     intro(6), intro(7), mdoc(7), intro(8), intro(9)
+
+macOS 26.5                     January 26, 2022                     macOS 26.5

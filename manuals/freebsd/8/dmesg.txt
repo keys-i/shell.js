@@ -1,0 +1,55 @@
+DMESG(8)                    System Manager's Manual                   DMESG(8)
+
+NAME
+     dmesg – display the system message buffer
+
+SYNOPSIS
+     dmesg [-ac] [-M core [-N system]]
+
+DESCRIPTION
+     The dmesg utility displays the contents of the system message buffer.  If
+     the -M option is not specified, the buffer is read from the currently
+     running kernel via the sysctl(3) interface.  Otherwise, the buffer is
+     read from the specified core file, using the name list from the specified
+     kernel image (or from the default image).
+
+     The options are as follows:
+
+     -a      Show all data in the message buffer.  This includes any syslog
+             records and /dev/console output.
+
+     -c      Clear the kernel buffer after printing.
+
+     -M      Extract values associated with the name list from the specified
+             core.
+
+     -N      If -M is also specified, extract the name list from the specified
+             system instead of the default, which is the kernel image the
+             system has booted from.
+
+SYSCTL VARIABLES
+     The following sysctl(8) variables control how the kernel timestamps
+     entries in the message buffer: The default value is shown next to each
+     variable.
+
+     kern.msgbuf_show_timestamp: 0
+             If set to 0, no timetamps are added.  If set to 1, then a
+             1-second granularity timestamp will be added to most lines in the
+             message buffer.  If set to 2, then a microsecond granularity
+             timestamp will be added.  This may also be set as a boot
+             loader(8) tunable.  The timestamps are placed at the start of
+             most lines that the kernel generates.  Some multi-line messages
+             will have only the first line tagged with a timestamp.
+
+FILES
+     /var/run/dmesg.boot      usually a snapshot of the buffer contents taken
+                              soon after file systems are mounted at startup
+                              time
+
+SEE ALSO
+     sysctl(3), syslogd(8)
+
+HISTORY
+     The dmesg utility appeared in 3BSD.
+
+macOS 26.5                        May 7, 2022                       macOS 26.5
