@@ -18,8 +18,10 @@ const cat = (args, ctx) =>
 
 const cd = (args, ctx) => {
   if (args.length > 1) return error("cd", "too many arguments");
-  ctx.chdir(args[0] ?? ctx.env.HOME ?? "/");
-  return result();
+  const target = args[0] === "-" ? ctx.env.OLDPWD : (args[0] ?? ctx.env.HOME ?? "/");
+  if (!target) return error("cd", "OLDPWD not set");
+  ctx.chdir(target);
+  return result(args[0] === "-" ? `${ctx.cwd}\n` : "");
 };
 
 const echo = (args) => {
@@ -42,6 +44,17 @@ const env = async (args, ctx) => {
           .map((key) => `${key}=${values[key]}\n`)
           .join(""),
       );
+};
+
+const printenv = (args, ctx) => {
+  if (!args.length) return env(args, ctx);
+  let stdout = "";
+  let code = 0;
+  for (const key of args) {
+    if (Object.hasOwn(ctx.env, key)) stdout += `${ctx.env[key]}\n`;
+    else code = 1;
+  }
+  return result(stdout, code);
 };
 
 const exportVariables = (args, ctx) => {
@@ -210,10 +223,22 @@ const rm = (args, ctx) => {
   if (!args.length) return force ? result() : error("rm", "missing operand", 2);
   for (const path of args) {
     try {
+      if (!recursive && ctx.fs.stat(path, ctx.cwd).type === "directory") {
+        return error("rm", `${path}: is a directory`);
+      }
       ctx.fs.remove(path, { cwd: ctx.cwd, recursive });
     } catch (caught) {
       if (!force || caught.code !== "ENOENT") throw caught;
     }
+  }
+  return result();
+};
+
+const rmdir = (args, ctx) => {
+  if (!args.length) return error("rmdir", "missing operand", 2);
+  for (const path of args) {
+    if (ctx.fs.stat(path, ctx.cwd).type !== "directory") return error("rmdir", `${path}: Not a directory`);
+    ctx.fs.remove(path, { cwd: ctx.cwd });
   }
   return result();
 };
@@ -405,9 +430,11 @@ export const createBuiltins = (profile) => {
     ls,
     man,
     mkdir,
+    printenv,
     printf,
     pwd,
     rm,
+    rmdir,
     touch,
     true: () => result(),
     uname,

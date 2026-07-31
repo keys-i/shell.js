@@ -95,6 +95,7 @@ export const createShell = ({
   fs.mkdir(state.env.HOME, { parents: true });
   fs.mkdir(cwd ?? state.env.HOME, { parents: true });
   state.cwd = fs.resolve("/", cwd ?? state.env.HOME);
+  state.env.PWD = state.cwd;
   const builtins = createBuiltins(profile);
   const registry = new Map(Object.entries(builtins.commands));
   manuals =
@@ -116,10 +117,13 @@ export const createShell = ({
     }
   };
 
-  const chdir = (path) => {
+  const chdir = (path, environment = state.env) => {
     const target = fs.resolve(state.cwd, path);
     if (fs.stat(target).type !== "directory") throw new Error(`${path}: Not a directory`);
+    const previous = state.cwd;
     state.cwd = target;
+    Object.assign(state.env, { OLDPWD: previous, PWD: target });
+    if (environment !== state.env) Object.assign(environment, { OLDPWD: previous, PWD: target });
   };
 
   const invoke = async (name, args, environment, stdin, signal) => {
@@ -137,7 +141,7 @@ export const createShell = ({
       get cwd() {
         return state.cwd;
       },
-      chdir,
+      chdir: (path) => chdir(path, environment),
       setenv: (key, value) => {
         if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) throw new TypeError(`invalid variable: ${key}`);
         environment[key] = String(value);

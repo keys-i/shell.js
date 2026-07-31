@@ -17,6 +17,8 @@ const shell = createShell({
   files: { "/etc/motd": "web shell\n", "/home/rad/.hidden": "secret\n" },
 });
 
+assert.equal(shell.env.PWD, "/home/rad");
+assert.notEqual((await createShell().exec("cd -")).code, 0);
 assert.equal(
   (await run(shell, String.raw`NAME=world; echo "hello $NAME" '$NAME' escaped\ value # ignored`)).stdout,
   "hello world $NAME escaped value\n",
@@ -36,6 +38,30 @@ assert.deepEqual(await shell.exec("echo kept; cat < missing"), {
   stderr: "shell: /home/rad/missing: No such file or directory\n",
 });
 assert.equal((await run(shell, "mkdir -p work/sub; cd work; touch a; ls")).stdout, "a  sub\n");
+assert.deepEqual(await run(shell, "cd /; cd -"), { code: 0, stdout: "/home/rad/work\n", stderr: "" });
+assert.equal(shell.env.PWD, "/home/rad/work");
+assert.equal(shell.env.OLDPWD, "/");
+assert.notEqual((await shell.exec("mkdir d; mkdir d")).code, 0);
+assert.equal((await run(shell, "mkdir -p d")).code, 0);
+assert.notEqual((await shell.exec("rm d")).code, 0);
+assert.equal(shell.fs.stat("d", shell.cwd).type, "directory");
+assert.equal((await run(shell, "rmdir d")).code, 0);
+assert.notEqual((await shell.exec("rmdir")).code, 0);
+assert.notEqual((await shell.exec("rmdir a")).code, 0);
+assert.notEqual((await shell.exec("touch sub/x; rmdir sub")).code, 0);
+assert.equal((await run(shell, "rm sub/x; mkdir -p tree/leaf; rm -r tree")).code, 0);
+assert.equal(shell.fs.exists("tree", shell.cwd), false);
+assert.match((await run(shell, "printenv")).stdout, /^PWD=\/home\/rad\/work$/m);
+assert.deepEqual(await shell.exec("printenv PWD USER MISSING"), {
+  code: 1,
+  stdout: "/home/rad/work\nrad\n",
+  stderr: "",
+});
+const anchored = createShell({ cwd: "/work/sub" });
+for (const command of ["rmdir .", "rm -r .."]) {
+  assert.notEqual((await anchored.exec(command)).code, 0);
+  assert.equal(anchored.fs.stat(".", anchored.cwd).type, "directory");
+}
 assert.equal((await run(shell, "export COLOR=blue; env COLOR=red echo $COLOR; echo $COLOR")).stdout, "blue\nblue\n");
 assert.equal((await run(shell, "uname -s; freebsd-version; whoami")).stdout, "FreeBSD\n14.2-RELEASE\nrad\n");
 assert.match((await run(shell, "sysctl kern.ostype; kldload koala; kldstat")).stdout, /FreeBSD[\s\S]*koala\.ko/);
@@ -53,6 +79,11 @@ shell.register("upper", async (args, { stdin, signal }) => {
   return (stdin || args.join(" ")).toUpperCase();
 });
 assert.equal((await run(shell, "echo koala | upper")).stdout, "KOALA\n");
+shell.register("root", (_args, ctx) => {
+  ctx.chdir("/");
+  assert.equal(ctx.env.PWD, "/");
+});
+assert.equal((await run(shell, "env TEMP=1 root")).code, 0);
 
 const fs = new MemoryFS({ "/safe/file": "ok" }, { maxFiles: 8, maxFileBytes: 8, maxTotalBytes: 8 });
 assert.equal(fs.read("/safe/file"), "ok");
