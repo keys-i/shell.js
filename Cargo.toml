@@ -5,7 +5,6 @@ edition = "2024"
 license = "MIT"
 description = "Optional WebAssembly accelerator for shell.js"
 repository = "https://github.com/keys-i/shell.js"
-publish = false
 
 [lib]
 crate-type = ["cdylib", "rlib"]
