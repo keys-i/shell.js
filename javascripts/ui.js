@@ -1,3 +1,5 @@
+import { completionStart } from "./parser.js";
+
 const element = (root, selector) => (root.matches?.(selector) ? root : root.querySelector(selector));
 
 export const mountShell = (root, shell, options = {}) => {
@@ -67,7 +69,7 @@ export const mountShell = (root, shell, options = {}) => {
       const matches = shell.complete(input.value);
       if (matches.length === 1) {
         event.preventDefault();
-        input.value = `${input.value.slice(0, input.value.search(/[^\s;|&]*$/))}${matches[0]}`;
+        input.value = `${input.value.slice(0, completionStart(input.value))}${matches[0]}`;
       }
     }
   };

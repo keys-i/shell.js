@@ -45,6 +45,7 @@ assert.equal(profiles.linux.sysname, "Linux");
 assert.throws(() => profiles.freebsd.modules.push("bad"), TypeError);
 assert.deepEqual(shell.complete("un"), ["uname", "unset"]);
 assert.deepEqual(shell.complete("cat s"), ["sub/"]);
+assert.deepEqual(shell.complete(`echo ${"x".repeat(16_384)}`), []);
 
 shell.register("upper", async (args, { stdin, signal }) => {
   await Promise.resolve();

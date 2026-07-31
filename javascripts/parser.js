@@ -25,6 +25,12 @@ const append = (parts, text, expandable) => {
 
 const raw = (word) => word.parts.map(({ text }) => text).join("");
 
+export const completionStart = (source) => {
+  let index = source.length;
+  while (index && source[index - 1].trim() && !";|&".includes(source[index - 1])) index--;
+  return index;
+};
+
 export const expandWord = (word, env = {}) =>
   word.parts
     .map(({ text, expandable }) => {

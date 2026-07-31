@@ -1,7 +1,7 @@
 import { createBuiltins } from "./commands.js";
 import { createFS, MemoryFS } from "./fs.js";
 import { createManuals } from "./man.js";
-import { expandWord, parse } from "./parser.js";
+import { completionStart, expandWord, parse } from "./parser.js";
 import { profiles, resolveProfile } from "./profiles.js";
 import { createWasm } from "./wasm.js";
 
@@ -295,16 +295,17 @@ export const createShell = ({
   };
 
   const complete = (line = "") => {
-    if (typeof line !== "string") return [];
-    const fragment = line.match(/[^\s;|&]*$/)?.[0] ?? "";
+    if (typeof line !== "string" || line.length > limits.maxSource) return [];
+    const start = completionStart(line);
+    const fragment = line.slice(start);
     if (fragment.startsWith("$")) {
       return Object.keys(state.env)
         .filter((key) => key.startsWith(fragment.slice(1)))
         .sort()
         .map((key) => `$${key}`);
     }
-    const before = line.slice(0, -fragment.length);
-    if (!before.trim() || /(?:^|[;|&])\s*$/.test(before)) {
+    const before = line.slice(0, start);
+    if (!before.trim() || ";|&".includes(before.trimEnd().at(-1))) {
       return [...registry.keys()].filter((name) => name.startsWith(fragment)).sort();
     }
     return fs.complete(state.cwd, fragment);

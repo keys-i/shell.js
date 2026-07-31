@@ -19,7 +19,7 @@ Representative range on Node 26.5.0 / Apple Silicon (2026-07-31):
 
 - simple pipeline: 80,000–82,000 operations/second
 - parse/control pipeline: 63,000–66,000 operations/second
-- 1 MiB literal filter: JavaScript 314–316, Wasm 1,060–1,080 operations/second
-- warm Wasm improvement: 237–245%
-- classic build: 28,970 bytes raw / 10,934 bytes gzip
+- 1 MiB literal filter: JavaScript 314–320, Wasm 1,050–1,080 operations/second
+- warm Wasm improvement: 229–245%
+- classic build: 29,048 bytes raw / 10,957 bytes gzip
 - Wasm accelerator: 3,842 bytes raw / 1,945 bytes gzip
