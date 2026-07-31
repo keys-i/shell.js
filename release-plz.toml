@@ -13,6 +13,7 @@ git_release_type = "auto"
 git_tag_enable = true
 git_tag_name = "v{{ version }}"
 pr_name = "chore: release Hatch Koala · v{{ version }}"
+pr_branch_prefix = "release"
 publish = false
 release_always = false
 semver_check = true
