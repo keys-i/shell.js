@@ -36,6 +36,8 @@ pipelines, virtual-filesystem redirects, bounded output, cancellation, command
 completion, portable built-ins, and configurable FreeBSD/Linux profiles. A
 custom command receives only the virtual capabilities passed to it; shell.js
 never uses `eval`, the host filesystem, or implicit network execution.
+It deliberately omits field splitting, globbing, command substitution,
+subshells, and job control.
 
 `mountShell()` is an unstyled, accessible adapter. Applications can ignore it
 and call `exec()` from any UI. The classic build exports `globalThis.ShellJS`;

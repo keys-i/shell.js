@@ -27,19 +27,21 @@ jobs:
         env:
           BENCH_ROUNDS: 250
       - run: git diff --exit-code -- javascripts/shell.min.js wasm/shell.wasm
-      - uses: release-plz/action@2eb1d8bcb770b4c48ccfaad919734b38b51958c9 # v0.5.131
+      - id: release
+        uses: release-plz/action@2eb1d8bcb770b4c48ccfaad919734b38b51958c9 # v0.5.131
         with:
           command: release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Attach browser artifacts when a release was created
+        if: steps.release.outputs.releases_created == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASES: ${{ steps.release.outputs.releases }}
         run: |
-          version="$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)"
-          if gh release view "v${version}" >/dev/null 2>&1; then
-            gh release upload "v${version}" javascripts/shell.min.js wasm/shell.wasm --clobber
-          fi
+          tag="$(jq -r '.[0].tag // empty' <<<"$RELEASES")"
+          test -n "$tag"
+          gh release upload "$tag" javascripts/shell.min.js wasm/shell.wasm
 
   release-pr:
     needs: release

@@ -103,6 +103,10 @@ export class MemoryFS {
   mkdir(path, { cwd = "/", parents = false } = {}) {
     path = this.resolve(cwd, path);
     if (this.#files.has(path)) fail(path, "Not a directory", "ENOTDIR");
+    if (this.#dirs.has(path)) {
+      if (parents) return path;
+      fail(path, "File exists", "EEXIST");
+    }
     const missing = [];
     for (let current = path; !this.#dirs.has(current); current = this.parent(current)) {
       missing.push(current);
@@ -133,8 +137,10 @@ export class MemoryFS {
   }
 
   remove(path, { cwd = "/", recursive = false } = {}) {
+    cwd = this.resolve("/", cwd);
     path = this.resolve(cwd, path);
     if (path === "/") fail(path, "cannot remove root", "EPERM");
+    if (path === cwd || cwd.startsWith(`${path}/`)) fail(path, "Device busy", "EBUSY");
     if (this.#files.has(path)) {
       this.#total -= bytes(this.#files.get(path));
       this.#files.delete(path);

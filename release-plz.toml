@@ -12,8 +12,9 @@ Classic browser build:
 git_release_type = "auto"
 git_tag_enable = true
 git_tag_name = "v{{ version }}"
+features_always_increment_minor = true
 pr_name = "chore: release Hatch Koala · v{{ version }}"
-pr_branch_prefix = "release"
+pr_branch_prefix = "releaseplz"
 publish = false
 release_always = false
 semver_check = true
