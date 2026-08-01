@@ -16,6 +16,8 @@ export const mountShell = (root, shell, options = {}) => {
   const history = [];
   let cursor = 0;
   let active;
+  let destroyed = false;
+  let readonly;
   const render =
     options.render ??
     ((entry) => {
@@ -39,19 +41,23 @@ export const mountShell = (root, shell, options = {}) => {
     cursor = history.length;
     input.value = "";
     const shown = label();
-    const readonly = input.readOnly;
+    readonly = input.readOnly;
     active = new AbortController();
     input.readOnly = true;
     try {
       const result = await shell.exec(command, { signal: active.signal });
+      if (destroyed) return;
       if (command.trim() === "clear") output.replaceChildren();
       else render({ ...result, command, prompt: shown }, { root, form, input, output, shell });
       while (output.childNodes.length > limit) output.firstChild.remove();
     } finally {
       active = null;
-      input.readOnly = readonly;
-      label();
-      input.focus();
+      if (!destroyed) {
+        input.readOnly = readonly;
+        label();
+        input.focus();
+      }
+      readonly = undefined;
     }
   };
   const keydown = (event) => {
@@ -78,6 +84,8 @@ export const mountShell = (root, shell, options = {}) => {
   label();
   return Object.freeze({
     destroy() {
+      destroyed = true;
+      if (readonly !== undefined) input.readOnly = readonly;
       active?.abort();
       form.removeEventListener("submit", submit);
       input.removeEventListener("keydown", keydown);

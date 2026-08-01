@@ -15,6 +15,10 @@ Run `npm run build && npm run benchmark` on the target browser/device before
 changing the threshold. CI size gates are deterministic; timing is reported
 instead of treated as a noisy shared-runner pass/fail signal.
 
+`npm run browser` reports cold-load, navigation, and warm-command timings in
+Chromium, Firefox, and a 4× CPU-throttled mobile Chromium profile. Its
+correctness assertions gate CI; shared-runner timings remain informational.
+
 Representative range on Node 26.5.0 / Apple Silicon (2026-07-31):
 
 - simple pipeline: 80,000–82,000 operations/second

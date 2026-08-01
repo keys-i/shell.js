@@ -44,6 +44,7 @@
   "scripts": {
     "benchmark": "node javascripts/benchmark.js",
     "benchmark:ci": "node javascripts/benchmark.js",
+    "browser": "node javascripts/browser.test.js",
     "build": "node javascripts/build.js",
     "format": "biome format --write . && cargo fmt",
     "format:check": "biome format . && cargo fmt --check",

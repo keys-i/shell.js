@@ -3,7 +3,7 @@
 A small, safe shell engine that can sit behind any web terminal UI.
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/keys-i/shell.js@v0.1.0/javascripts/shell.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/keys-i/shell.js@v0.2.0/javascripts/shell.min.js"></script>
 <script>
   const shell = ShellJS.createShell({
     profile: "freebsd",
@@ -41,7 +41,8 @@ subshells, and job control.
 
 `mountShell()` is an unstyled, accessible adapter. Applications can ignore it
 and call `exec()` from any UI. The classic build exports `globalThis.ShellJS`;
-the readable modules remain the source of truth.
+the readable modules remain the source of truth. CI exercises both forms in
+current Chromium and Firefox, plus a CPU-throttled mobile Chromium profile.
 
 ## Kernels and WebAssembly
 
@@ -76,6 +77,7 @@ the Wasm target.
 npm ci
 npm run validate
 npm run build
+npm run browser
 npm run benchmark
 ```
 
