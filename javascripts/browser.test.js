@@ -78,13 +78,18 @@ const run = async (driver, fixture) => {
     });
   }
   const base = `http://127.0.0.1:${driver.port}`;
-  const send = async (path, body, method = body === undefined ? "GET" : "POST") => {
-    const response = await fetch(`${base}${path}`, {
-      method,
-      signal: AbortSignal.timeout(25_000),
-      headers: body === undefined ? undefined : { "content-type": "application/json" },
-      body: body === undefined ? undefined : JSON.stringify(body),
-    });
+  const send = async (path, body, method = body === undefined ? "GET" : "POST", timeout = 25_000) => {
+    let response;
+    try {
+      response = await fetch(`${base}${path}`, {
+        method,
+        signal: AbortSignal.timeout(timeout),
+        headers: body === undefined ? undefined : { "content-type": "application/json" },
+        body: body === undefined ? undefined : JSON.stringify(body),
+      });
+    } catch (error) {
+      throw new Error(`${driver.name}: ${method} ${path}: ${error.message}\n${diagnostics}`, { cause: error });
+    }
     const data = await response.json();
     if (!response.ok || data.value?.error) {
       throw new Error(`${driver.name}: ${data.value?.message ?? response.statusText}\n${diagnostics}`);
@@ -112,7 +117,7 @@ const run = async (driver, fixture) => {
             deviceMetrics: { height: 844, mobile: true, pixelRatio: 3, touch: true, width: 390 },
           };
         }
-        const created = await send("/session", { capabilities: { alwaysMatch: options } });
+        const created = await send("/session", { capabilities: { alwaysMatch: options } }, "POST", 60_000);
         session = created.sessionId;
         await send(`/session/${session}/timeouts`, { implicit: 0, pageLoad: 20_000, script: 20_000 });
         if (suite.mobile) {
