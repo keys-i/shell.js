@@ -83,4 +83,4 @@ HISTORY
      The -K and -U extension flags appeared in FreeBSD 10.0.  The -b extension
      flag appeared in FreeBSD 13.0.
 
-macOS 26.5                    September 14, 2022                    macOS 26.5
+FreeBSD 14.2-RELEASE-p4       September 14, 2022       FreeBSD 14.2-RELEASE-p4

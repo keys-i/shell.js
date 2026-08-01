@@ -511,4 +511,4 @@ SEE ALSO
        fexecve(3), getauxval(3), getopt(3), system(3), capabilities(7),
        credentials(7), environ(7), path_resolution(7), ld.so(8)
 
-Linux man-pages (unreleased)        (date)                           execve(2)
+Linux man-pages 6.18              2026-02-08                         execve(2)

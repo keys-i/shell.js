@@ -1,8 +1,21 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { join, relative } from "node:path";
 import { runInNewContext } from "node:vm";
 import { createManuals, readLimited } from "./man.js";
-import { licenseHeader, validateManual } from "./manuals.js";
+import { buildManuals, licenseHeader, validateManual } from "./manuals.js";
 import { MemoryFS, createShell, profiles } from "./shell.js";
 import { createWasm } from "./wasm.js";
 
@@ -119,14 +132,22 @@ const second = serial.exec("echo $ORDER");
 await first;
 assert.equal((await second).stdout, "done\n");
 
+const manualPage = "MAN(1)\nNAME\n     man - display manual pages\n";
 const documents = new Map([
   [
     "/manuals/freebsd/index.json",
     JSON.stringify({
-      pages: { man: { section: "1", path: "1/man.txt", description: "display manual pages" } },
+      pages: {
+        man: {
+          section: "1",
+          path: "1/man.txt",
+          description: "display manual pages",
+          sha256: createHash("sha256").update(manualPage).digest("hex"),
+        },
+      },
     }),
   ],
-  ["/manuals/freebsd/1/man.txt", "MAN(1)\nNAME\n     man - display manual pages\n"],
+  ["/manuals/freebsd/1/man.txt", manualPage],
 ]);
 const manuals = createManuals({
   base: "https://example.test/manuals/",
@@ -155,21 +176,202 @@ assert.throws(
   /invalid manual/,
 );
 
-const manifest = JSON.parse(readFileSync("manuals/manifest.json", "utf8"));
-for (const [profile, config] of Object.entries(manifest.profiles)) {
-  const index = JSON.parse(readFileSync(`manuals/${profile}/index.json`, "utf8"));
-  assert.equal(index.revision, config.revision);
-  for (const entry of config.pages) {
-    const value = index.pages[entry.name];
-    const record = (Array.isArray(value) ? value : [value]).find(({ section }) => section === entry.section);
-    assert.equal(record.sha256, entry.sha256);
-    assert.ok(existsSync(`manuals/${profile}/${record.path}`));
-  }
-  for (const entry of config.licenses ?? []) {
-    assert.equal(index.licenses[entry.name].sha256, entry.sha256);
-    assert.ok(existsSync(`manuals/${profile}/${index.licenses[entry.name].path}`));
-  }
+const generated = mkdtempSync(join(tmpdir(), "shelljs-manuals-"));
+const original = { cwd: process.cwd(), fetch: globalThis.fetch, path: process.env.PATH };
+const source = '.\\" SPDX-License-Identifier: BSD-2-Clause\n.Dd July 31, 2026\n.Dt TEST 1\n.Os\n';
+try {
+  mkdirSync(join(generated, "bin"));
+  writeFileSync(join(generated, "bin/mandoc"), "#!/bin/sh\ncat\n");
+  chmodSync(join(generated, "bin/mandoc"), 0o755);
+  mkdirSync(join(generated, "work/manuals/freebsd/1"), { recursive: true });
+  writeFileSync(join(generated, "work/manuals/freebsd/1/stale.txt"), "stale");
+  writeFileSync(
+    join(generated, "work/manuals/manifest.json"),
+    JSON.stringify({
+      profiles: {
+        freebsd: {
+          release: "14.2-RELEASE-p4",
+          origin: "https://cgit.freebsd.org/src",
+          revision: "0".repeat(40),
+          pages: [
+            {
+              name: "test",
+              section: "1",
+              path: "share/man/man1/test.1",
+              sha256: createHash("sha256").update(source).digest("hex"),
+            },
+          ],
+        },
+      },
+    }),
+  );
+  process.chdir(join(generated, "work"));
+  process.env.PATH = `${join(generated, "bin")}:${original.path}`;
+  globalThis.fetch = async () => new Response(source, { headers: { "content-type": "text/plain" } });
+  await buildManuals();
+  assert.equal(existsSync("manuals/freebsd/1/stale.txt"), false);
+  const before = readFileSync("manuals/freebsd/1/test.txt", "utf8");
+  writeFileSync(
+    "manuals/manifest.json",
+    readFileSync("manuals/manifest.json", "utf8").replace(
+      createHash("sha256").update(source).digest("hex"),
+      "0".repeat(64),
+    ),
+  );
+  renameSync("manuals/freebsd", "manuals/.freebsd.previous");
+  await assert.rejects(buildManuals());
+  assert.equal(readFileSync("manuals/freebsd/1/test.txt", "utf8"), before);
+} finally {
+  process.chdir(original.cwd);
+  process.env.PATH = original.path;
+  globalThis.fetch = original.fetch;
+  rmSync(generated, { force: true, recursive: true });
 }
+
+const manifest = JSON.parse(readFileSync("manuals/manifest.json", "utf8"));
+const flatten = (pages) =>
+  Object.entries(pages).flatMap(([name, value]) =>
+    (Array.isArray(value) ? value : [value]).map((record) => ({ name, ...record })),
+  );
+for (const [profile, config] of Object.entries(manifest.profiles)) {
+  const root = `manuals/${profile}`;
+  const index = JSON.parse(readFileSync(`manuals/${profile}/index.json`, "utf8"));
+  const audit = JSON.parse(readFileSync(`manuals/${profile}/provenance.json`, "utf8"));
+  assert.equal(index.profile, profile);
+  assert.equal(index.release, config.release);
+  assert.equal(audit.profile, profile);
+  assert.equal(audit.release, config.release);
+  assert.equal(audit.origin, config.origin);
+  assert.equal(audit.revision, config.revision);
+  assert.deepEqual(index.aliases, config.aliases ?? {});
+  const expected = new Map(config.pages.map((entry) => [`${entry.name}\0${entry.section}`, entry]));
+  const records = flatten(index.pages);
+  const sources = new Map(flatten(audit.pages).map((record) => [`${record.name}\0${record.section}`, record]));
+  assert.equal(records.length, expected.size);
+  assert.equal(sources.size, expected.size);
+  for (const record of records) {
+    const key = `${record.name}\0${record.section}`;
+    const entry = expected.get(key);
+    const sourceRecord = sources.get(key);
+    assert.ok(entry && expected.delete(key));
+    assert.ok(sourceRecord && sources.delete(key));
+    assert.deepEqual(
+      {
+        section: sourceRecord.section,
+        sourcePath: sourceRecord.sourcePath,
+        revision: sourceRecord.revision,
+        sha256: sourceRecord.sha256,
+      },
+      {
+        section: entry.section,
+        sourcePath: entry.path,
+        revision: config.revision,
+        sha256: entry.sha256,
+      },
+    );
+    const source = new URL(sourceRecord.source);
+    assert.equal(source.origin, new URL(config.origin).origin);
+    assert.ok(source.pathname.endsWith(`/${entry.path}`));
+    assert.equal(source.searchParams.get("id"), config.revision);
+    assert.ok(sourceRecord.license);
+    const text = readFileSync(`${root}/${record.path}`, "utf8");
+    assert.equal(createHash("sha256").update(text).digest("hex"), record.sha256);
+    if (profile === "linux") assert.doesNotMatch(text, /\(date\)|\(unreleased\)/);
+    else {
+      assert.doesNotMatch(text, /macOS/);
+      assert.match(text, /FreeBSD 14\.2-RELEASE-p4/);
+    }
+  }
+  assert.equal(expected.size, 0);
+  assert.equal(sources.size, 0);
+  for (const target of Object.values(config.aliases ?? {})) {
+    const value = index.pages[target.name];
+    assert.ok((Array.isArray(value) ? value : [value]).some((entry) => entry?.section === target.section));
+  }
+  assert.deepEqual(Object.keys(audit.licenses).sort(), (config.licenses ?? []).map(({ name }) => name).sort());
+  for (const entry of config.licenses ?? []) {
+    const record = audit.licenses[entry.name];
+    assert.deepEqual(
+      {
+        sourcePath: record.sourcePath,
+        revision: record.revision,
+        sha256: record.sha256,
+      },
+      {
+        sourcePath: entry.path,
+        revision: config.revision,
+        sha256: entry.sha256,
+      },
+    );
+    const path = `${root}/${record.path}`;
+    assert.equal(createHash("sha256").update(readFileSync(path)).digest("hex"), entry.sha256);
+  }
+  if (profile === "linux") {
+    for (const { license } of flatten(audit.pages)) {
+      const identifier = license.match(/SPDX-License-Identifier:\s*([A-Za-z0-9.+-]+)/)?.[1];
+      assert.ok(identifier && audit.licenses[`${identifier}.txt`]);
+    }
+  }
+  assert.deepEqual(
+    readdirSync(root, { recursive: true, withFileTypes: true })
+      .filter((entry) => entry.isFile() && entry.name.endsWith(".txt"))
+      .map((entry) => relative(root, join(entry.parentPath, entry.name)))
+      .sort(),
+    [...records.map(({ path }) => path), ...Object.values(audit.licenses).map(({ path }) => path)].sort(),
+  );
+}
+
+const localManuals = (profile, requests) =>
+  createManuals({
+    base: "https://example.test/manuals/",
+    profile,
+    fetch: async (url) => {
+      const path = new URL(url).pathname.slice(1);
+      requests.push(path);
+      return existsSync(path) ? new Response(readFileSync(path)) : new Response("", { status: 404 });
+    },
+  });
+const freebsdRequests = [];
+const freebsdManuals = localManuals("freebsd", freebsdRequests);
+assert.match(await freebsdManuals.read("bt"), /^DDB\(4\)/);
+assert.deepEqual(freebsdRequests, ["manuals/freebsd/index.json", "manuals/freebsd/4/ddb.txt"]);
+assert.equal(await freebsdManuals.find("bt", "1"), null);
+
+const linuxRequests = [];
+const linuxManuals = localManuals("linux", linuxRequests);
+assert.match(await linuxManuals.read("signal", "2"), /^signal\(2\)/i);
+assert.match(await linuxManuals.read("signal", "7"), /^signal\(7\)/i);
+assert.equal((await linuxManuals.find("openat")).path, "2/open.txt");
+assert.equal((await linuxManuals.find("__clone2")).path, "2/clone.txt");
+assert.deepEqual(
+  (await linuxManuals.search("openat")).map(({ name, section }) => [name, section]),
+  [["openat", "2"]],
+);
+assert.deepEqual(linuxRequests, [
+  "manuals/linux/index.json",
+  "manuals/linux/2/signal.txt",
+  "manuals/linux/7/signal.txt",
+]);
+
+const invalidAliasManuals = createManuals({
+  base: "https://example.test/manuals/",
+  fetch: async () =>
+    new Response(
+      `{"pages":{"man":{"section":"1","path":"1/man.txt","sha256":"${"0".repeat(64)}"}},"aliases":{"help":{"name":"missing","section":"1"}}}`,
+    ),
+});
+await assert.rejects(invalidAliasManuals.index(), /invalid manual index/);
+
+const corruptedManuals = createManuals({
+  base: "https://example.test/manuals/",
+  fetch: async (url) =>
+    new Response(
+      new URL(url).pathname.endsWith("index.json")
+        ? `{"pages":{"man":{"section":"1","path":"1/man.txt","sha256":"${"0".repeat(64)}"}}}`
+        : "changed",
+    ),
+});
+await assert.rejects(corruptedManuals.read("man"), /integrity/);
 
 if (existsSync("wasm/shell.wasm")) {
   const bytes = readFileSync("wasm/shell.wasm");

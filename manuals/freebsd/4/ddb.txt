@@ -959,4 +959,4 @@ HISTORY
      Robert N. M. Watson added support for ddb output capture, textdump(4) and
      scripting in FreeBSD 7.1.
 
-macOS 26.5                     November 10, 2022                    macOS 26.5
+FreeBSD 14.2-RELEASE-p4        November 10, 2022       FreeBSD 14.2-RELEASE-p4

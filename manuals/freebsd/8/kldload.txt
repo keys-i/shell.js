@@ -76,4 +76,4 @@ HISTORY
 AUTHORS
      Doug Rabson <dfr@FreeBSD.org>
 
-macOS 26.5                     December 20, 2023                    macOS 26.5
+FreeBSD 14.2-RELEASE-p4        December 20, 2023       FreeBSD 14.2-RELEASE-p4

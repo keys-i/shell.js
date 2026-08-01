@@ -65,6 +65,8 @@ Every generated entry records its source path, revision, digest, and license
 header. The upstream manual text is not covered by this repository's MIT
 license; see [manual sources](docs/MANUAL_SOURCES.md).
 
+Manual reads use Web Crypto to verify each lazily fetched rendered page.
+
 ## Development
 
 Requires Node 22+, rustup, and `mandoc`; `rust-toolchain.toml` pins Rust and

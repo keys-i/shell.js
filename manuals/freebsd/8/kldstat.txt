@@ -1,0 +1,103 @@
+KLDSTAT(8)                  System Manager's Manual                 KLDSTAT(8)
+
+NAME
+     kldstat – display status of dynamic kernel linker
+
+SYNOPSIS
+     kldstat [-h] [-q] [-v] [-d] [-i id] [-n filename]
+     kldstat [-q] [-d] [-m modname]
+
+DESCRIPTION
+     The kldstat utility displays the status of any files dynamically linked
+     into the kernel.
+
+     The following options are available:
+
+     -h        Display the size field in a human-readable form, using unit
+               suffixes instead of hex values.
+
+     -v        Be more verbose.
+
+     -d        Show the module specific data (as int, unsigned int and
+               unsigned long)
+
+     -i id     Display the status of only the file with this ID.
+
+     -n filename
+               Display the status of only the file with this filename.
+
+     -q        Only check if file is loaded or compiled into the kernel.
+
+     -m modname
+               Display the status of only the module with this modname.
+
+EXIT STATUS
+     The kldstat utility exits 0 on success, and >0 if an error occurs.
+
+EXAMPLES
+     Show files dynamically linked into the kernel.  Note the kernel itself is
+     shown in the list.  Refs shows the number of modules referenced by each
+     file:
+
+           $ kldstat
+           Id Refs Address                Size Name
+            1   38 0xffffffff80200000  2448f20 kernel
+            2    3 0xffffffff82649000    b7bd8 linux.ko
+            3    5 0xffffffff82701000     9698 linux_common.ko
+            4    1 0xffffffff82b11000     1eae linsysfs.ko
+            5    1 0xffffffff82b13000    f2af8 nvidia-modeset.ko
+            6    1 0xffffffff82c06000  122b020 nvidia.ko
+            7    1 0xffffffff83e32000     2668 intpm.ko
+            8    1 0xffffffff83e35000      b50 smbus.ko
+            9    1 0xffffffff83e36000     18a0 uhid.ko
+           10    1 0xffffffff83e38000     2928 ums.ko
+           11    1 0xffffffff83e3b000     1aa0 wmt.ko
+           12    1 0xffffffff83e3d000     cd70 snd_uaudio.ko
+
+     Show the verbose status of the linux file and show the size in a human
+     readable fashion:
+
+           $ kldstat -h -v -n linux
+           Id Refs Address             Size Name
+            2    3 0xffffffff82649000  735K linux.ko (/boot/kernel/linux.ko)
+                   Contains modules:
+                            Id Name
+                             2 linuxelf
+
+     Same as above using the id of the file:
+
+           $ kldstat -h -i 2 -v
+           Id Refs Address             Size Name
+            2    3 0xffffffff82649000  735K linux.ko (/boot/kernel/linux.ko)
+                   Contains modules:
+                            Id Name
+                             2 linuxelf
+
+     Show the status of the linuxelf module obtained from the example above:
+
+           $ kldstat -v -m linuxelf
+           Id  Refs Name
+             2    1 linuxelf
+
+     Show the module specific data for the g_raid module:
+
+           $ kldstat -d -m g_raid
+           Id  Refs Name data..(int, uint, ulong)
+           366    1 g_raid (0, 0, 0x0)
+
+     Check if the module fakefile is linked.  Returns 0 if it is, 1 otherwise:
+
+           $ kldstat -q -n fakefile || echo file not linked
+           file not linked
+
+SEE ALSO
+     kldstat(2), kldload(8), kldunload(8)
+
+HISTORY
+     The kldstat utility first appeared in FreeBSD 3.0, replacing the lkm
+     interface.
+
+AUTHORS
+     Doug Rabson <dfr@FreeBSD.org>
+
+FreeBSD 14.2-RELEASE-p4        January 19, 2016        FreeBSD 14.2-RELEASE-p4

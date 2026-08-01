@@ -492,4 +492,4 @@ SEE ALSO
 HISTORY
      A hier manual page first appeared in 1979 with Version 7 AT&T UNIX.
 
-macOS 26.5                     October 10, 2024                     macOS 26.5
+FreeBSD 14.2-RELEASE-p4        October 10, 2024        FreeBSD 14.2-RELEASE-p4

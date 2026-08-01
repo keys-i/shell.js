@@ -4,7 +4,35 @@
       "release": "14.2-RELEASE-p4",
       "origin": "https://cgit.freebsd.org/src",
       "revision": "d9352700f9357aa170c1e4dc144537998ec66025",
+      "aliases": {
+        "bt": {
+          "name": "ddb",
+          "section": "4"
+        },
+        "cd": {
+          "name": "builtin",
+          "section": "1"
+        },
+        "exit": {
+          "name": "builtin",
+          "section": "1"
+        },
+        "recovery": {
+          "name": "rescue",
+          "section": "8"
+        },
+        "trace": {
+          "name": "ddb",
+          "section": "4"
+        }
+      },
       "pages": [
+        {
+          "name": "builtin",
+          "section": "1",
+          "path": "share/man/man1/builtin.1",
+          "sha256": "3e787de78fd1c216625a05456f161c1e135f4037c0d7d3967919739b2093772f"
+        },
         {
           "name": "cat",
           "section": "1",
@@ -24,6 +52,18 @@
           "sha256": "08f2f4f5db915ba7f6e002a19fa518b505b6ad077578b405d5aab6aa83cbfff3"
         },
         {
+          "name": "freebsd-version",
+          "section": "1",
+          "path": "bin/freebsd-version/freebsd-version.1",
+          "sha256": "dd7b7cf0fc6ed6cf5e9d1c9d84f8676a6b3a7dda8a41daaf90062a7041a5ed42"
+        },
+        {
+          "name": "fsck",
+          "section": "8",
+          "path": "sbin/fsck/fsck.8",
+          "sha256": "313da5320316d5e65dbb6836d3725ec50222fae8af45d26d5dff5059e5879d32"
+        },
+        {
           "name": "hier",
           "section": "7",
           "path": "share/man/man7/hier.7",
@@ -34,6 +74,18 @@
           "section": "8",
           "path": "sbin/kldload/kldload.8",
           "sha256": "6f655d732b1d2a74390871bd567e475aeaa7afcef479a7a85bf07d1dda0bbc6e"
+        },
+        {
+          "name": "kldstat",
+          "section": "8",
+          "path": "sbin/kldstat/kldstat.8",
+          "sha256": "60cbe9135d480564c335bbe8ab4c1fe863faac85ebfa16671e04ae873956ba88"
+        },
+        {
+          "name": "kldunload",
+          "section": "8",
+          "path": "sbin/kldunload/kldunload.8",
+          "sha256": "67beb00ed53ae50e353a86765e6569a8c7f16449c8952e698ad915eff2ca764c"
         },
         {
           "name": "ls",
@@ -48,10 +100,28 @@
           "sha256": "b9137ffa8bcdcfc40ad895f0e71c4b67b0516d14031db3cca49bb8bcbb073e19"
         },
         {
+          "name": "mount",
+          "section": "8",
+          "path": "sbin/mount/mount.8",
+          "sha256": "1a594acd6dd32e746d92146916be13c0b3f4e81f0af084fced1011c7bd203a02"
+        },
+        {
           "name": "panic",
           "section": "9",
           "path": "share/man/man9/panic.9",
           "sha256": "b7090a7b914a1093aff687935b35e68e217118bcceebdde84d1dc13eef8abee6"
+        },
+        {
+          "name": "ps",
+          "section": "1",
+          "path": "bin/ps/ps.1",
+          "sha256": "277478a9d223c8ac99b0fa31616ce910f0d5060e7d08ae70ccae1143e410bda3"
+        },
+        {
+          "name": "rescue",
+          "section": "8",
+          "path": "share/man/man8/rescue.8",
+          "sha256": "b6c41084d7465032c61660532572eb1d956749c52eb90fb9b2639d3a39b785bf"
         },
         {
           "name": "sh",
@@ -75,8 +145,47 @@
     },
     "linux": {
       "release": "man-pages-6.18",
+      "date": "2026-02-08",
       "origin": "https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git",
       "revision": "66d786852379759d22c891d70ff9311d9f193fdc",
+      "aliases": {
+        "__clone2": {
+          "name": "clone",
+          "section": "2"
+        },
+        "clone3": {
+          "name": "clone",
+          "section": "2"
+        },
+        "creat": {
+          "name": "open",
+          "section": "2"
+        },
+        "dup2": {
+          "name": "dup",
+          "section": "2"
+        },
+        "dup3": {
+          "name": "dup",
+          "section": "2"
+        },
+        "openat": {
+          "name": "open",
+          "section": "2"
+        },
+        "pipe2": {
+          "name": "pipe",
+          "section": "2"
+        },
+        "waitid": {
+          "name": "wait",
+          "section": "2"
+        },
+        "waitpid": {
+          "name": "wait",
+          "section": "2"
+        }
+      },
       "licenses": [
         {
           "name": "GPL-1.0-or-later.txt",
@@ -100,6 +209,18 @@
           "section": "2",
           "path": "man/man2/clone.2",
           "sha256": "4a8910f9c8047022cf4ce5c82a000471ba6f9634cf5a9c5dbf0a66b169d65652"
+        },
+        {
+          "name": "close",
+          "section": "2",
+          "path": "man/man2/close.2",
+          "sha256": "c2418d73adb7e5ea3d185b26f6614c3e64980e41600d753d79e560ab93bbd41d"
+        },
+        {
+          "name": "dup",
+          "section": "2",
+          "path": "man/man2/dup.2",
+          "sha256": "d42aba090fd94b4097e121bed752afbabaa98430f9e56eb8028696293c1fbecc"
         },
         {
           "name": "execve",
@@ -126,6 +247,12 @@
           "sha256": "f1b83f36106f49ad2965f1ed2d853bdf9d04b7ebac5b9a4429475eb8ad943401"
         },
         {
+          "name": "pipe",
+          "section": "2",
+          "path": "man/man2/pipe.2",
+          "sha256": "b5f5880496ae79a902a3b2d7e8b6fd4b7d7ced4160ede8aa3c8a95dae1191cfd"
+        },
+        {
           "name": "proc_pid_status",
           "section": "5",
           "path": "man/man5/proc_pid_status.5",
@@ -139,9 +266,21 @@
         },
         {
           "name": "signal",
+          "section": "2",
+          "path": "man/man2/signal.2",
+          "sha256": "ca4724342023f963f5464d177abac86a0fc00fd77cdb998937ff6d707896a8c1"
+        },
+        {
+          "name": "signal",
           "section": "7",
           "path": "man/man7/signal.7",
           "sha256": "57d59f5b0431fc68250ef110d666cc4b515a1f0d80b3badc147f5a4a0521e47c"
+        },
+        {
+          "name": "wait",
+          "section": "2",
+          "path": "man/man2/wait.2",
+          "sha256": "ae7047886184524f01fa4ac5fc4ce3d759f3af9054489b4ef634ac1cee802517"
         },
         {
           "name": "write",

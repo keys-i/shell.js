@@ -496,4 +496,4 @@ BUGS
      IEEE Std 1003.2 (“POSIX.2”) mandates opposite sort orders for files with
      the same timestamp when sorting with the -t option.
 
-macOS 26.5                       July 22, 2024                      macOS 26.5
+FreeBSD 14.2-RELEASE-p4          July 22, 2024         FreeBSD 14.2-RELEASE-p4

@@ -37,7 +37,7 @@
   },
   "bugs": "https://github.com/keys-i/shell.js/issues",
   "homepage": "https://github.com/keys-i/shell.js#readme",
-  "license": "MIT",
+  "license": "SEE LICENSE IN docs/MANUAL_SOURCES.md",
   "engines": {
     "node": ">=22"
   },
