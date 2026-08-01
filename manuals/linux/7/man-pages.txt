@@ -915,4 +915,4 @@ SEE ALSO
        man(1), man2html(1), attributes(7), groff(7), groff_man(7), man(7),
        mdoc(7)
 
-Linux man-pages (unreleased)        (date)                        man-pages(7)
+Linux man-pages 6.18              2026-02-08                      man-pages(7)

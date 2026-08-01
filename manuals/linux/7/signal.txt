@@ -624,4 +624,4 @@ SEE ALSO
        sigvec(3), sigwait(3), strsignal(3), swapcontext(3), sysv_signal(3),
        core(5), proc(5), nptl(7), pthreads(7), sigevent(3type)
 
-Linux man-pages (unreleased)        (date)                           signal(7)
+Linux man-pages 6.18              2026-02-08                         signal(7)

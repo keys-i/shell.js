@@ -1,10 +1,11 @@
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import { readLimited } from "./man.js";
 
-const names = /^[A-Za-z0-9][A-Za-z0-9_.+-]*$/;
+const names = /^[a-z0-9_][a-z0-9_.+-]*$/;
+const files = /^[A-Za-z0-9_][A-Za-z0-9_.+-]*$/;
 const sections = /^[1-9][A-Za-z0-9]*$/;
 const revisions = /^[a-f0-9]{40}$/;
 const digests = /^[a-f0-9]{64}$/;
@@ -40,7 +41,7 @@ const validateLicense = (profile, revision, entry) => {
   if (
     !Object.hasOwn(roots, profile) ||
     !revisions.test(revision) ||
-    !names.test(entry?.name) ||
+    !files.test(entry?.name) ||
     !safePath(entry?.path) ||
     !digests.test(entry?.sha256)
   ) {
@@ -87,61 +88,153 @@ const fetchSource = async (profile, revision, entry) => {
   return { source, url: url.href };
 };
 
-const render = (source, entry) => {
+const render = (source, entry, profile, config) => {
   if (/^\.so\s+/m.test(source)) throw new Error(`${entry.path}: unresolved .so alias; pin its target explicitly`);
-  const process = spawnSync("mandoc", ["-T", "utf8"], { encoding: "utf8", input: source, maxBuffer: 4_194_304 });
+  const args = ["-T", "utf8"];
+  if (profile === "freebsd") args.push("-I", `os=FreeBSD ${config.release}`);
+  if (profile === "linux") {
+    const version = config.release.match(/^man-pages-(\d+\.\d+)$/)?.[1];
+    if (!version || !/^\d{4}-\d{2}-\d{2}$/.test(config.date)) throw new TypeError("invalid Linux release metadata");
+    const built = source.replace(
+      /^(\.TH\s+\S+\s+\S+\s+)\(date\)\s+"Linux man-pages \(unreleased\)"$/m,
+      `$1${config.date} "Linux man-pages ${version}"`,
+    );
+    if (built === source) throw new Error(`${entry.path}: missing Linux release placeholders`);
+    source = built;
+  }
+  const process = spawnSync("mandoc", args, { encoding: "utf8", input: source, maxBuffer: 4_194_304 });
   if (process.error) throw process.error;
   if (process.status) throw new Error(`${entry.path}: mandoc failed\n${process.stderr}`);
   return `${process.stdout.replace(backspace, "").replace(ansi, "").trimEnd()}\n`;
 };
 
+const backup = (target) => target.replace(/\/([^/]+)$/, "/.$1.previous");
+const recover = async (target) => {
+  try {
+    await rename(backup(target), target);
+  } catch (error) {
+    if (error.code === "ENOENT") return;
+    if (error.code !== "EEXIST" && error.code !== "ENOTEMPTY") throw error;
+    await rm(backup(target), { force: true, recursive: true });
+  }
+};
+const replace = async (source, target) => {
+  const previous = backup(target);
+  let moved = false;
+  await recover(target);
+  try {
+    await rename(target, previous);
+    moved = true;
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
+  try {
+    await rename(source, target);
+  } catch (error) {
+    if (moved) await rename(previous, target);
+    throw error;
+  }
+  if (moved) await rm(previous, { force: true, recursive: true });
+};
+
 export const buildManuals = async (manifestPath = "manuals/manifest.json") => {
   const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
   for (const [profile, config] of Object.entries(manifest.profiles ?? {})) {
-    const pages = {};
-    const licenses = {};
-    for (const value of config.licenses ?? []) {
-      const entry = validateLicense(profile, config.revision, value);
-      const { source, url } = await fetchSource(profile, config.revision, entry);
-      await mkdir(`manuals/${profile}/LICENSES`, { recursive: true });
-      await writeFile(`manuals/${profile}/LICENSES/${entry.name}`, source);
-      licenses[entry.name] = {
-        path: `LICENSES/${entry.name}`,
-        source: url,
-        sourcePath: entry.path,
-        revision: config.revision,
-        sha256: entry.sha256,
-      };
+    if (!Object.hasOwn(roots, profile)) throw new TypeError(`invalid manual profile: ${profile}`);
+    await recover(`manuals/${profile}`);
+    const output = await mkdtemp(`manuals/.${profile}-`);
+    const pages = Object.create(null);
+    const provenance = Object.create(null);
+    const licenses = Object.create(null);
+    try {
+      for (const value of config.licenses ?? []) {
+        const entry = validateLicense(profile, config.revision, value);
+        const { source, url } = await fetchSource(profile, config.revision, entry);
+        await mkdir(`${output}/LICENSES`, { recursive: true });
+        await writeFile(`${output}/LICENSES/${entry.name}`, source);
+        licenses[entry.name] = {
+          path: `LICENSES/${entry.name}`,
+          source: url,
+          sourcePath: entry.path,
+          revision: config.revision,
+          sha256: entry.sha256,
+        };
+      }
+      for (const value of config.pages ?? []) {
+        const entry = validateManual(profile, config.revision, value);
+        const { source, url } = await fetchSource(profile, config.revision, entry);
+        const text = render(source, entry, profile, config);
+        const license = licenseHeader(source);
+        const identifier = license.match(/^\.\\?" SPDX-License-Identifier:\s*([A-Za-z0-9.+-]+)\s*$/m)?.[1];
+        if (profile === "linux" && (!identifier || !Object.hasOwn(licenses, `${identifier}.txt`))) {
+          throw new Error(`${entry.path}: missing pinned license text for ${identifier ?? "unknown SPDX license"}`);
+        }
+        const relative = `${entry.section}/${entry.name}.txt`;
+        await mkdir(`${output}/${entry.section}`, { recursive: true });
+        await writeFile(`${output}/${relative}`, text);
+        const current = Object.hasOwn(pages, entry.name)
+          ? Array.isArray(pages[entry.name])
+            ? pages[entry.name]
+            : [pages[entry.name]]
+          : [];
+        if (current.some(({ section }) => section === entry.section)) {
+          throw new TypeError(`duplicate manual manifest entry: ${profile}/${entry.name}(${entry.section})`);
+        }
+        const runtime = {
+          section: entry.section,
+          description: description(text, entry.name),
+          path: relative,
+          sha256: createHash("sha256").update(text).digest("hex"),
+        };
+        const audit = {
+          section: entry.section,
+          path: relative,
+          source: url,
+          sourcePath: entry.path,
+          revision: config.revision,
+          sha256: entry.sha256,
+          license,
+        };
+        pages[entry.name] = current.length ? [...current, runtime] : runtime;
+        provenance[entry.name] = current.length
+          ? [...(Array.isArray(provenance[entry.name]) ? provenance[entry.name] : [provenance[entry.name]]), audit]
+          : audit;
+      }
+      const aliases = Object.create(null);
+      for (const [alias, target] of Object.entries(config.aliases ?? {})) {
+        const value = target && Object.hasOwn(pages, target.name) ? pages[target.name] : null;
+        const entries = Array.isArray(value) ? value : value ? [value] : [];
+        if (
+          !names.test(alias) ||
+          Object.hasOwn(pages, alias) ||
+          !names.test(target?.name ?? "") ||
+          !sections.test(target?.section ?? "") ||
+          !entries.some(({ section }) => section === target.section)
+        ) {
+          throw new TypeError(`invalid manual alias: ${profile}/${alias}`);
+        }
+        aliases[alias] = { name: target.name, section: target.section };
+      }
+      await writeFile(
+        `${output}/index.json`,
+        `${JSON.stringify({ profile, release: config.release, aliases, pages })}\n`,
+      );
+      await writeFile(
+        `${output}/provenance.json`,
+        `${JSON.stringify({
+          profile,
+          release: config.release,
+          origin: config.origin,
+          revision: config.revision,
+          licenses,
+          pages: provenance,
+        })}\n`,
+      );
+      await replace(output, `manuals/${profile}`);
+    } finally {
+      await rm(output, { force: true, recursive: true });
     }
-    for (const value of config.pages ?? []) {
-      const entry = validateManual(profile, config.revision, value);
-      const { source, url } = await fetchSource(profile, config.revision, entry);
-      const text = render(source, entry);
-      const relative = `${entry.section}/${entry.name}.txt`;
-      await mkdir(`manuals/${profile}/${entry.section}`, { recursive: true });
-      await writeFile(`manuals/${profile}/${relative}`, text);
-      const record = {
-        section: entry.section,
-        description: description(text, entry.name),
-        path: relative,
-        source: url,
-        sourcePath: entry.path,
-        revision: config.revision,
-        sha256: entry.sha256,
-        license: licenseHeader(source),
-      };
-      pages[entry.name] = pages[entry.name] ? [pages[entry.name], record].flat() : record;
-    }
-    const index = {
-      profile,
-      release: config.release,
-      origin: config.origin,
-      revision: config.revision,
-      licenses,
-      pages,
-    };
-    await writeFile(`manuals/${profile}/index.json`, `${JSON.stringify(index)}\n`);
-    console.log(`${profile}: ${Object.keys(pages).length} pages`);
+    console.log(`${profile}: ${(config.pages ?? []).length} pages`);
   }
 };
 

@@ -1127,4 +1127,4 @@ SEE ALSO
        tkill(2), unshare(2), wait(2), capabilities(7), namespaces(7),
        pthreads(7)
 
-Linux man-pages (unreleased)        (date)                            clone(2)
+Linux man-pages 6.18              2026-02-08                          clone(2)

@@ -127,4 +127,4 @@ SEE ALSO
        close(2), fcntl(2), ioctl(2), lseek(2), open(2), pread(2), readdir(2),
        readlink(2), readv(2), select(2), write(2), fread(3)
 
-Linux man-pages (unreleased)        (date)                             read(2)
+Linux man-pages 6.18              2026-02-08                           read(2)

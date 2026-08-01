@@ -1753,4 +1753,4 @@ BUGS
      The sh utility does not recognize multibyte characters other than UTF-8.
      Splitting using IFS does not recognize multibyte characters.
 
-macOS 26.5                     December 14, 2022                    macOS 26.5
+FreeBSD 14.2-RELEASE-p4        December 14, 2022       FreeBSD 14.2-RELEASE-p4

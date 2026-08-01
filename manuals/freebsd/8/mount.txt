@@ -1,0 +1,379 @@
+MOUNT(8)                    System Manager's Manual                   MOUNT(8)
+
+NAME
+     mount – mount file systems
+
+SYNOPSIS
+     mount [--libxo] [-adflpruvw] [-F fstab] [-o options]
+           [-t [no]type[,type ...]]
+     mount [--libxo] [-dfpruvw] special | node
+     mount [--libxo] [-dfpruvw] [-o options] [-t [no]type[,type ...]]
+           special node
+
+DESCRIPTION
+     The mount utility calls the nmount(2) system call to prepare and graft a
+     special device or the remote node (rhost:path) on to the file system tree
+     at the point node.  If either special or node are not provided, the
+     appropriate information is taken from the fstab(5) file.
+
+     The system maintains a list of currently mounted file systems.  If no
+     arguments are given to mount, this list is printed.
+
+     The options are as follows:
+
+     --libxo
+             Generate output via libxo(3) in a selection of different human
+             and machine readable formats.  See xo_parse_args(3) for details
+             on command line arguments.
+
+     -a      All the file systems described in fstab(5) are mounted.
+             Exceptions are those marked as “noauto”, those marked as “late”
+             (unless the -l option was specified), those excluded by the -t
+             flag (see below), or if they are already mounted (except the root
+             file system which is always remounted to preserve traditional
+             single user mode behavior).
+
+     -d      Causes everything to be done except for the actual system call.
+             This option is useful in conjunction with the -v flag to
+             determine what the mount command is trying to do.
+
+     -F fstab
+             Specify the fstab file to use.
+
+     -f      Forces the revocation of write access when trying to downgrade a
+             file system mount status from read-write to read-only.  Also
+             forces the R/W mount of an unclean file system (dangerous; use
+             with caution).
+
+     -L      When used in conjunction with the -a option, mount only those
+             file systems which are marked as “late”.
+
+     -l      When used in conjunction with the -a option, also mount those
+             file systems which are marked as “late”.
+
+     -n      For compatibility with some other implementations, this flag is
+             currently a no-op.
+
+     -o      Options are specified with a -o flag followed by a comma
+             separated string of options.  In case of conflicting options
+             being specified, the rightmost option takes effect.  The
+             following options are available:
+
+             acls    Enable POSIX.1e Access Control Lists, or ACLs, which can
+                     be customized via the setfacl(1) and getfacl(1) commands.
+                     This flag is mutually exclusive with nfsv4acls flag.
+
+             async   All I/O to the file system should be done asynchronously.
+                     This is a dangerous flag to set, since it does not
+                     guarantee that the file system structure on the disk will
+                     remain consistent.  For this reason, the async flag
+                     should be used sparingly, and only when some data
+                     recovery mechanism is present.
+
+             atime   Update the file access time when reading from a file.
+                     This is the default.
+
+             automounted
+                     This flag indicates that the file system was mounted by
+                     automountd(8).  Automounted file systems are
+                     automatically unmounted by autounmountd(8).
+
+             autoro  Mount the file system read-write.  If that fails with an
+                     error that suggests that the media could be read-only,
+                     then automatically try to mount the file system read-
+                     only.
+
+             current
+                     When used with the -u flag, this is the same as
+                     specifying the options currently in effect for the
+                     mounted file system.
+
+             emptydir
+                     Require that the mount point directory be empty.
+
+             force   The same as -f; forces the revocation of write access
+                     when trying to downgrade a file system mount status from
+                     read-write to read-only.  Also forces the R/W mount of an
+                     unclean file system (dangerous; use with caution).
+
+             fstab   When used with the -u flag, this is the same as
+                     specifying all the options listed in the fstab(5) file
+                     for the file system.
+
+             late    This file system should be skipped when mount is run with
+                     the -a flag but without the -l flag.
+
+             mountprog=⟨program⟩
+                     Force mount to use the specified program to mount the
+                     file system, instead of calling nmount(2) directly.  For
+                     example:
+
+                     mount -t foofs -o mountprog=/mydir/fooprog /dev/cd0 /mnt
+
+             multilabel
+                     Enable multi-label Mandatory Access Control, or MAC, on
+                     the specified file system.  If the file system supports
+                     multilabel operation, individual labels will be
+                     maintained for each object in the file system, rather
+                     than using a single label for all objects.  An
+                     alternative to the -l flag in tunefs(8).  See mac(4) for
+                     more information, which cause the multilabel mount flag
+                     to be set automatically at mount-time.
+
+             nfsv4acls
+                     Enable NFSv4 ACLs, which can be customized via the
+                     setfacl(1) and getfacl(1) commands.  This flag is
+                     mutually exclusive with acls flag.
+
+             noasync
+                     Metadata I/O should be done synchronously, while data I/O
+                     should be done asynchronously.  This is the default.
+
+             noatime
+                     Do not update the file access time when reading from a
+                     file.  This option is useful on file systems where there
+                     are large numbers of files and performance is more
+                     critical than updating the file access time (which is
+                     rarely ever important).  This option is currently only
+                     supported on local file systems.
+
+             noauto  This file system should be skipped when mount is run with
+                     the -a flag.
+
+             noclusterr
+                     Disable read clustering.
+
+             noclusterw
+                     Disable write clustering.
+
+             nocover
+                     Do not mount if the requested mount point is already the
+                     root of a mount point.
+
+             noexec  Do not allow execution of any binaries on the mounted
+                     file system.  This option is useful for a server that has
+                     file systems containing binaries for architectures other
+                     than its own.  Note: This option was not designed as a
+                     security feature and no guarantee is made that it will
+                     prevent malicious code execution; for example, it is
+                     still possible to execute scripts which reside on a
+                     noexec mounted partition.
+
+             nosuid  Do not allow set-user-identifier or set-group-identifier
+                     bits to take effect.  Note: this option is worthless if a
+                     public available suid or sgid wrapper is installed on
+                     your system.  It is set automatically when the user does
+                     not have super-user privileges.
+
+             nosymfollow
+                     Do not follow symlinks on the mounted file system.
+
+             ro      The same as -r; mount the file system read-only (even the
+                     super-user may not write it).
+
+             snapshot
+                     Take a snapshot of the specified filesystem.  When this
+                     option is used, all other options are ignored.  The -u
+                     flag is required with this option.
+
+                     Snapshot files must be created in the file system that is
+                     being snapshotted.  You may create up to 20 snapshots per
+                     file system.  Active snapshots are recorded in the
+                     superblock, so they persist across unmount and remount
+                     operations and across system reboots.  When you are done
+                     with a snapshot, it can be removed with the rm(1)
+                     command.  Snapshots may be removed in any order, however
+                     you may not get back all the space contained in the
+                     snapshot as another snapshot may claim some of the blocks
+                     that it is releasing.  Note that the schg flag is set on
+                     snapshots to ensure that not even the root user can write
+                     to them.  The unlink command makes an exception for
+                     snapshot files in that it allows them to be removed even
+                     though they have the schg flag set, so it is not
+                     necessary to clear the schg flag before removing a
+                     snapshot file.
+
+                     Once you have taken a snapshot, there are three
+                     interesting things that you can do with it:
+
+                     1.   Run fsck(8) on the snapshot file.  Assuming that the
+                          file system was clean when it was mounted, you
+                          should always get a clean (and unchanging) result
+                          from running fsck on the snapshot.  This is
+                          essentially what the background fsck process does.
+
+                     2.   Run dump(8) on the snapshot.  You will get a dump
+                          that is consistent with the file system as of the
+                          timestamp of the snapshot.
+
+                     3.   Mount the snapshot as a frozen image of the file
+                          system.  To mount the snapshot /var/snapshot/snap1:
+
+                          mdconfig -a -t vnode -f /var/snapshot/snap1 -u 4
+                          mount -r /dev/md4 /mnt
+
+                          You can now cruise around your frozen /var file
+                          system at /mnt.  Everything will be in the same
+                          state that it was at the time the snapshot was
+                          taken.  The one exception is that any earlier
+                          snapshots will appear as zero length files.  When
+                          you are done with the mounted snapshot:
+
+                          umount /mnt
+                          mdconfig -d -u 4
+
+             suiddir
+                     A directory on the mounted file system will respond to
+                     the SUID bit being set, by setting the owner of any new
+                     files to be the same as the owner of the directory.  New
+                     directories will inherit the bit from their parents.
+                     Execute bits are removed from the file, and it will not
+                     be given to root.
+
+                     This feature is designed for use on fileservers serving
+                     PC users via ftp, SAMBA, or netatalk.  It provides
+                     security holes for shell users and as such should not be
+                     used on shell machines, especially on home directories.
+                     This option requires the SUIDDIR option in the kernel to
+                     work.  Only UFS file systems support this option.  See
+                     chmod(2) for more information.
+
+             sync    All I/O to the file system should be done synchronously.
+
+             update  The same as -u; indicate that the status of an already
+                     mounted file system should be changed.
+
+             union   Causes the namespace at the mount point to appear as the
+                     union of the mounted file system root and the existing
+                     directory.  Lookups will be done in the mounted file
+                     system first.  If those operations fail due to a non-
+                     existent file the underlying directory is then accessed.
+                     All creates are done in the mounted file system.
+
+             untrusted
+                     The file system is untrusted and the kernel should use
+                     more extensive checks on the file-system's metadata
+                     before using it.  This option is intended to be used when
+                     mounting file systems from untrusted media such as USB
+                     memory sticks or other externally-provided media.
+
+             Any additional options specific to a file system type that is not
+             one of the internally known types (see the -t option) may be
+             passed as a comma separated list; these options are distinguished
+             by a leading “-” (dash).  For example, the mount command:
+
+                   mount -t cd9660 -o -e /dev/cd0 /cdrom
+
+             causes mount to execute the equivalent of:
+
+                   /sbin/mount_cd9660 -e /dev/cd0 /cdrom
+
+             Options that take a value are specified using the -option=value
+             syntax:
+
+                   mount -t msdosfs -o -u=fred,-g=wheel /dev/da0s1 /mnt
+
+             is equivalent to
+
+                   /sbin/mount_msdosfs -u fred -g wheel /dev/da0s1 /mnt
+
+             Additional options specific to file system types which are not
+             internally known (see the description of the -t option below) may
+             be described in the manual pages for the associated
+             /sbin/mount_XXX utilities.
+
+     -p      Print mount information in fstab(5) format.  Implies also the -v
+             option.
+
+     -r      The file system is to be mounted read-only.  Mount the file
+             system read-only (even the super-user may not write it).  The
+             same as the ro argument to the -o option.
+
+     -t [no]type[,type ...]
+             The argument following the -t is used to indicate the file system
+             type.  The type ufs is the default.  The -t option can be used to
+             indicate that the actions should only be taken on file systems of
+             the specified type.  More than one type may be specified in a
+             comma separated list.  The list of file system types can be
+             prefixed with no to specify the file system types for which
+             action should not be taken.  For example, the mount command:
+
+                   mount -a -t nonfs,nullfs
+
+             mounts all file systems except those of type NFS and NULLFS.
+
+             The default behavior of mount is to pass the -t option directly
+             to the nmount(2) system call in the fstype option.
+
+             However, for the following file system types: cd9660, mfs,
+             msdosfs, nfs, nullfs, smbfs, udf, and unionfs mount will not call
+             nmount(2) directly and will instead attempt to execute a program
+             in /sbin/mount_type where type is replaced by the file system
+             type name.  For example, nfs file systems are mounted by the
+             program /sbin/mount_nfs.
+
+             Most file systems will be dynamically loaded by the kernel if not
+             already present, and if the kernel module is available.
+
+     -u      The -u flag indicates that the status of an already mounted file
+             system should be changed.  Any of the options discussed above
+             (the -o option) may be changed; also a file system can be changed
+             from read-only to read-write or vice versa.  An attempt to change
+             from read-write to read-only will fail if any files on the file
+             system are currently open for writing unless the -f flag is also
+             specified.  The set of options is determined by applying the
+             options specified in the argument to -o and finally applying the
+             -r or -w option.
+
+     -v      Verbose mode.  If the -v is used alone, show all file systems,
+             including those that were mounted with the MNT_IGNORE flag and
+             show additional information about each file system (including
+             fsid when run by root).
+
+     -w      The file system object is to be read and write.
+
+ENVIRONMENT
+     PATH_FSTAB      If the environment variable PATH_FSTAB is set, all
+                     operations are performed against the specified file.
+                     PATH_FSTAB will not be honored if the process environment
+                     or memory address space is considered “tainted”.  (See
+                     issetugid(2) for more information.)
+
+FILES
+     /etc/fstab  file system table
+
+DIAGNOSTICS
+     Various, most of them are self-explanatory.
+
+           XXXXX file system is not available
+
+     The kernel does not support the respective file system type.  Note that
+     support for a particular file system might be provided either on a static
+     (kernel compile-time), or dynamic basis (loaded as a kernel module by
+     kldload(8)).
+
+SEE ALSO
+     getfacl(1), setfacl(1), nmount(2), acl(3), libxo(3), xo_parse_args(3),
+     mac(4), cd9660(5), devfs(5), ext2fs(5), fstab(5), procfs(5), tarfs(5),
+     tmpfs(5), automount(8), fstyp(8), kldload(8), mount_cd9660(8),
+     mount_msdosfs(8), mount_nfs(8), mount_nullfs(8), mount_smbfs(8),
+     mount_udf(8), mount_unionfs(8), umount(8), zfs(8), zpool(8)
+
+HISTORY
+     A mount utility appeared in Version 1 AT&T UNIX.
+
+CAVEATS
+     After a successful mount, the permissions on the original mount point
+     determine if .. is accessible from the mounted file system.  The minimum
+     permissions for the mount point for traversal across the mount point in
+     both directions to be possible for all users is 0111 (execute for all).
+
+     Use of the mount is preferred over the use of the file system specific
+     mount_XXX commands.  In particular, mountd(8) gets a SIGHUP signal (that
+     causes an update of the export list) only when the file system is mounted
+     via mount.
+
+BUGS
+     It is possible for a corrupted file system to cause a crash.
+
+FreeBSD 14.2-RELEASE-p4        January 24, 2024        FreeBSD 14.2-RELEASE-p4

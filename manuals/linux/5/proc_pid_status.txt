@@ -251,4 +251,4 @@ DESCRIPTION
 SEE ALSO
        proc(5)
 
-Linux man-pages (unreleased)        (date)                  proc_pid_status(5)
+Linux man-pages 6.18              2026-02-08                proc_pid_status(5)

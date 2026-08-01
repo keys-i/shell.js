@@ -77,4 +77,4 @@ RETURN VALUES
 SEE ALSO
      printf(3), ddb(4), gdb(4), KASSERT(9), kern_reboot(9)
 
-macOS 26.5                      March 17, 2023                      macOS 26.5
+FreeBSD 14.2-RELEASE-p4         March 17, 2023         FreeBSD 14.2-RELEASE-p4

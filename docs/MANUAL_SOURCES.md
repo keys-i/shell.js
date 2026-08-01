@@ -1,11 +1,11 @@
 # Manual sources
 
-The generated manual packs are derived from upstream documentation and retain
-their upstream terms. They are not relicensed under shell.js's MIT license.
+Shell.js code is MIT-licensed under [`../LICENSE`](../LICENSE). The generated
+manual packs retain their upstream terms and are not relicensed under MIT.
 
 FreeBSD pages come from `cgit.freebsd.org/src` at
 `d9352700f9357aa170c1e4dc144537998ec66025` (14.2-RELEASE-p4). FreeBSD's source
-tree contains multiple licenses; every generated index entry preserves the
+tree contains multiple licenses; every generated provenance entry preserves the
 page's path, digest, source URL, revision, and detected copyright/license
 header.
 
@@ -20,6 +20,13 @@ kernel and C-library interfaces rather than a distribution's userland tools.
 Add a page only with its exact upstream path, immutable revision, SHA-256
 digest, and a successful `mandoc` render.
 
-Each index preserves the source page's leading notice. The Linux pack also
-ships the exact, checksum-verified upstream texts for every license used by
-the included pages under `manuals/linux/LICENSES/`.
+Alternate names are explicit manifest aliases to one pinned page and section.
+The generator validates every target; browsers never chase upstream `.so`
+redirects.
+
+Each pack keeps its compact, integrity-checked runtime lookup in `index.json`
+and source hashes, URLs, revisions, and leading notices in `provenance.json`.
+The Linux release date is the signed 6.18 release date; FreeBSD rendering pins
+the configured OS release. The Linux pack also ships the exact,
+checksum-verified upstream texts for every license used by the included pages
+under `manuals/linux/LICENSES/`.
