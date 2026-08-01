@@ -124,7 +124,9 @@
     await delay();
     assert(lateRenders === 0 && delayedOutput.textContent === "preserved", "destroy allowed late output");
     assert(prompts === promptCount && document.activeElement.id === "sentinel", "destroy allowed late focus or prompt");
-    delayedForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    const detachedSubmit = new Event("submit", { bubbles: true, cancelable: true });
+    detachedSubmit.preventDefault();
+    delayedForm.dispatchEvent(detachedSubmit);
     key(delayedInput, "l", { ctrlKey: true });
     await delay();
     assert(delayedOutput.textContent === "preserved", "destroy left listeners attached");

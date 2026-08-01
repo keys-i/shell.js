@@ -131,20 +131,11 @@ const run = async (driver, fixture) => {
         await send(`/session/${session}/url`, {
           url: `${fixture}/javascripts/browser.fixture.html?run=${suite.name}-${Date.now()}`,
         });
-        let report;
-        for (let attempt = 0; attempt < 3; attempt++) {
-          try {
-            report = await send(`/session/${session}/execute/async`, {
-              args: [],
-              script:
-                "const done=arguments[arguments.length-1];window.browserReport?window.browserReport.then(done):done({ok:false,error:'fixture did not start'});",
-            });
-            break;
-          } catch (error) {
-            if (attempt === 2 || !error.message.includes("Document was unloaded")) throw error;
-            await pause(100);
-          }
-        }
+        const report = await send(`/session/${session}/execute/async`, {
+          args: [],
+          script:
+            "const done=arguments[arguments.length-1];window.browserReport?window.browserReport.then(done):done({ok:false,error:'fixture did not start'});",
+        });
         assert.equal(report.ok, true, `${suite.name}: ${report.error ?? "failed"}\n${report.stack ?? ""}`);
         const metrics = report.metrics;
         if (suite.mobile) assert.match(metrics.userAgent, /Android|Mobile/, "mobile emulation did not set a mobile UA");
