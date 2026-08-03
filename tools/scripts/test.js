@@ -14,10 +14,10 @@ import {
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
 import { runInNewContext } from "node:vm";
-import { createManuals, readLimited } from "./man.js";
+import { createManuals, readLimited } from "../../javascripts/man.js";
+import { MemoryFS, createShell, profiles } from "../../javascripts/shell.js";
+import { createWasm } from "../../javascripts/wasm.js";
 import { buildManuals, licenseHeader, validateManual } from "./manuals.js";
-import { MemoryFS, createShell, profiles } from "./shell.js";
-import { createWasm } from "./wasm.js";
 
 const run = async (shell, command) => {
   const output = await shell.exec(command);

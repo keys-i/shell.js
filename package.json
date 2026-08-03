@@ -42,15 +42,15 @@
     "node": ">=22"
   },
   "scripts": {
-    "benchmark": "node javascripts/benchmark.js",
-    "benchmark:ci": "node javascripts/benchmark.js",
-    "browser": "node javascripts/browser.test.js",
-    "build": "node javascripts/build.js",
+    "benchmark": "node tools/scripts/benchmark.js",
+    "benchmark:ci": "node tools/scripts/benchmark.js",
+    "browser": "node tools/scripts/browser.test.js",
+    "build": "node tools/scripts/build.js",
     "format": "biome format --write . && cargo fmt",
     "format:check": "biome format . && cargo fmt --check",
     "lint": "biome lint .",
-    "manuals": "node javascripts/manuals.js",
-    "test": "node javascripts/test.js && cargo test",
+    "manuals": "node tools/scripts/manuals.js",
+    "test": "node tools/scripts/test.js && cargo test",
     "validate": "npm run lint && npm run format:check && npm test"
   },
   "devDependencies": {

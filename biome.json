@@ -1,17 +1,4 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.5.6/schema.json",
-  "files": {
-    "includes": ["**/*.js", "**/*.json", "!javascripts/shell.min.js", "!manuals"]
-  },
-  "formatter": {
-    "enabled": true,
-    "indentStyle": "space",
-    "lineWidth": 120
-  },
-  "linter": {
-    "enabled": true,
-    "rules": {
-      "preset": "recommended"
-    }
-  }
+  "extends": ["./tools/config/biome.json"]
 }

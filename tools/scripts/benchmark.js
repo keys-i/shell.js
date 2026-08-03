@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
-import { createShell } from "./shell.js";
-import { createWasm } from "./wasm.js";
+import { createShell } from "../../javascripts/shell.js";
+import { createWasm } from "../../javascripts/wasm.js";
 
 const rounds = Number(process.env.BENCH_ROUNDS ?? 1000);
 if (!Number.isSafeInteger(rounds) || rounds < 1 || rounds > 100_000) throw new TypeError("invalid BENCH_ROUNDS");
