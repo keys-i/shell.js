@@ -16,6 +16,7 @@ import { join, relative } from "node:path";
 import { runInNewContext } from "node:vm";
 import { createManuals, readLimited } from "../../javascripts/man.js";
 import { BlockDevice, BlockFS } from "../../javascripts/block.js";
+import { createX86 } from "../../javascripts/cpu/x86.js";
 import { MemoryFS, createShell, profiles } from "../../javascripts/shell.js";
 import { createWasm } from "../../javascripts/wasm.js";
 import { buildManuals, licenseHeader, validateManual } from "./manuals.js";
@@ -421,4 +422,25 @@ console.log("shell.js core: ok");
   remount.remove("/home/rad", { recursive: true });
   assert.equal(remount.exists("/home/rad"), false);
   console.log("shell.js blockfs: ok");
+}
+
+{
+  // movabs rax, 1; movabs rdi, 42; syscall  (exit-style halt via null syscall result)
+  const program = Uint8Array.from([
+    0x48, 0xb8, 1, 0, 0, 0, 0, 0, 0, 0, 0x48, 0xbf, 42, 0, 0, 0, 0, 0, 0, 0, 0x48, 0x83, 0xc0, 7, 0x48, 0x83, 0xe8, 3,
+    0x0f, 0x05,
+  ]);
+  let saw = null;
+  const cpu = createX86({
+    onSyscall: ({ nr, args }) => {
+      saw = { nr, args: [...args] };
+      return null;
+    },
+  });
+  cpu.load(program);
+  cpu.run();
+  assert.equal(saw?.nr, 5n);
+  assert.equal(saw?.args[0], 42n);
+  assert.equal(cpu.halted, true);
+  console.log("shell.js x86: ok");
 }
