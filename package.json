@@ -11,6 +11,7 @@
     "./manuals/*": "./manuals/*"
   },
   "files": [
+    "javascripts/block.js",
     "javascripts/commands.js",
     "javascripts/fs.js",
     "javascripts/index.js",

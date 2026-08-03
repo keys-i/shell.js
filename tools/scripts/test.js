@@ -15,6 +15,7 @@ import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
 import { runInNewContext } from "node:vm";
 import { createManuals, readLimited } from "../../javascripts/man.js";
+import { BlockDevice, BlockFS } from "../../javascripts/block.js";
 import { MemoryFS, createShell, profiles } from "../../javascripts/shell.js";
 import { createWasm } from "../../javascripts/wasm.js";
 import { buildManuals, licenseHeader, validateManual } from "./manuals.js";
@@ -400,3 +401,24 @@ if (existsSync("javascripts/shell.min.js")) {
 }
 
 console.log("shell.js core: ok");
+
+{
+  const disk = new BlockDevice({ blockSize: 512, blocks: 64 });
+  const fs = new BlockFS(disk);
+  fs.mkdir("/home/rad", { parents: true });
+  fs.write("/home/rad/note.txt", "koala\n");
+  fs.append("/home/rad/note.txt", "dingo\n");
+  assert.equal(fs.read("/home/rad/note.txt"), "koala\ndingo\n");
+  assert.equal(fs.stat("/home/rad").type, "directory");
+  assert.deepEqual(
+    fs.list("/home/rad").map((entry) => entry.name),
+    ["note.txt"],
+  );
+  const remount = new BlockFS(disk, { format: false });
+  assert.equal(remount.read("/home/rad/note.txt"), "koala\ndingo\n");
+  const mounted = createShell({ files: remount, profile: "freebsd" });
+  assert.equal((await mounted.exec("cat /home/rad/note.txt")).stdout, "koala\ndingo\n");
+  remount.remove("/home/rad", { recursive: true });
+  assert.equal(remount.exists("/home/rad"), false);
+  console.log("shell.js blockfs: ok");
+}
