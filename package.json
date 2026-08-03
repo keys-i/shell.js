@@ -12,6 +12,8 @@
   },
   "files": [
     "javascripts/block.js",
+    "javascripts/cpu/memory.js",
+    "javascripts/cpu/x86.js",
     "javascripts/commands.js",
     "javascripts/fs.js",
     "javascripts/index.js",
