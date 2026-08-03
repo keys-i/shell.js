@@ -1,4 +1,4 @@
-importScripts("./shell.min.js");
+importScripts("/javascripts/shell.min.js");
 
 (async () => {
   try {

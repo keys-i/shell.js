@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { mkdir, mkdtemp, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
-import { readLimited } from "./man.js";
+import { readLimited } from "../../javascripts/man.js";
 
 const names = /^[a-z0-9_][a-z0-9_.+-]*$/;
 const files = /^[A-Za-z0-9_][A-Za-z0-9_.+-]*$/;
