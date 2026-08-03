@@ -1,4 +1,4 @@
-import { FLAGS, LinearMemory, RegisterFile, i64, setAddFlags, setLogicalFlags, setSubFlags, u64 } from "./memory.js";
+import { FLAGS, LinearMemory, RegisterFile, setAddFlags, setLogicalFlags, setSubFlags, u64 } from "./memory.js";
 
 const REG = Object.freeze({
   rax: 0,
