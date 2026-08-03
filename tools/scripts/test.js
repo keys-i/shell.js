@@ -16,6 +16,7 @@ import { join, relative } from "node:path";
 import { runInNewContext } from "node:vm";
 import { createManuals, readLimited } from "../../javascripts/man.js";
 import { BlockDevice, BlockFS } from "../../javascripts/block.js";
+import { createArm } from "../../javascripts/cpu/arm.js";
 import { createX86 } from "../../javascripts/cpu/x86.js";
 import { MemoryFS, createShell, profiles } from "../../javascripts/shell.js";
 import { createWasm } from "../../javascripts/wasm.js";
@@ -443,4 +444,24 @@ console.log("shell.js core: ok");
   assert.equal(saw?.args[0], 42n);
   assert.equal(cpu.halted, true);
   console.log("shell.js x86: ok");
+}
+
+{
+  // movz x0, #42; movz x8, #1; add x8, x8, #4; svc #0
+  const program = Uint8Array.from([
+    0x40, 0x05, 0x80, 0xd2, 0x28, 0x00, 0x80, 0xd2, 0x08, 0x11, 0x00, 0x91, 0x01, 0x00, 0x00, 0xd4,
+  ]);
+  let saw = null;
+  const cpu = createArm({
+    onSyscall: ({ nr, args }) => {
+      saw = { nr, args: [...args] };
+      return null;
+    },
+  });
+  cpu.load(program);
+  cpu.run();
+  assert.equal(saw?.nr, 5n);
+  assert.equal(saw?.args[0], 42n);
+  assert.equal(cpu.halted, true);
+  console.log("shell.js arm: ok");
 }
