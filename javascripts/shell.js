@@ -72,11 +72,14 @@ export const createShell = ({
   env = {},
   files = {},
   commands: custom = {},
+  capabilities = {},
   manuals,
   wasm,
   limits: configured,
   signal: lifetime,
 } = {}) => {
+  if (!capabilities || typeof capabilities !== "object") throw new TypeError("capabilities must be an object");
+  capabilities = Object.freeze({ ...capabilities });
   const profile = resolveProfile(selected);
   const limits = limitOptions(configured);
   const fs = isFilesystem(files) ? files : createFS(files, limits);
@@ -134,6 +137,7 @@ export const createShell = ({
     if (!handler) return { code: 127, stdout: "", stderr: `${name}: command not found\n` };
     const context = {
       fs,
+      capabilities,
       profile,
       kernel: builtins.kernel,
       manuals,

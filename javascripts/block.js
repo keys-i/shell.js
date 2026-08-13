@@ -66,8 +66,9 @@ export class BlockDevice {
     if (!(source instanceof Uint8Array)) throw new TypeError("source must be Uint8Array");
     const start = block * this.#blockSize;
     const slice = new Uint8Array(this.#view.buffer, start, this.#blockSize);
-    slice.fill(0);
-    slice.set(source.subarray(0, this.#blockSize));
+    const length = Math.min(source.length, this.#blockSize);
+    slice.set(source.subarray(0, length));
+    slice.fill(0, length);
   }
 
   zero(block) {
@@ -93,8 +94,21 @@ export class BlockFS {
     this.#inodeBlocks = Math.max(1, Math.ceil(this.#device.blocks / 64));
     this.#inodeCount = Math.floor((this.#inodeBlocks * this.#device.blockSize) / INODE_BYTES);
     this.#dataStart = 1 + this.#inodeBlocks;
-    if (format || u32(this.#view, SUPER) !== MAGIC) this.#format();
-    else this.#rebuildFree();
+    if (format) this.#format();
+    else {
+      if (
+        u32(this.#view, SUPER) !== MAGIC ||
+        u32(this.#view, 4) !== VERSION ||
+        u32(this.#view, 8) !== this.#device.blockSize ||
+        u32(this.#view, 12) !== this.#device.blocks ||
+        u32(this.#view, 16) !== this.#inodeBlocks ||
+        u32(this.#view, 20) !== this.#inodeCount ||
+        u32(this.#view, 24) !== this.#dataStart
+      ) {
+        fail("/", "invalid block image", "EIO");
+      }
+      this.#rebuildFree();
+    }
   }
 
   get device() {
@@ -124,19 +138,53 @@ export class BlockFS {
   }
 
   #rebuildFree() {
-    this.#inodeBlocks = u32(this.#view, 16);
-    this.#inodeCount = u32(this.#view, 20);
-    this.#dataStart = u32(this.#view, 24);
     this.#free = new Set();
     for (let block = this.#dataStart; block < this.#device.blocks; block++) this.#free.add(block);
+    const used = new Set();
+    const allocated = new Set();
     for (let inode = ROOT_INODE; inode < this.#inodeCount; inode++) {
       const node = this.#readInode(inode);
       if (node.type === INODE_FREE) continue;
+      if (node.type !== INODE_FILE && node.type !== INODE_DIR) fail("/", "invalid block image", "EIO");
+      allocated.add(inode);
+      const chain = new Set();
       for (let current = node.direct; current; ) {
+        if (current < this.#dataStart || current >= this.#device.blocks || chain.has(current) || used.has(current)) {
+          fail("/", "invalid block image", "EIO");
+        }
+        chain.add(current);
+        used.add(current);
         this.#free.delete(current);
         current = u32(this.#view, current * this.#device.blockSize + this.#device.blockSize - 4);
       }
+      if (chain.size !== Math.ceil(node.size / (this.#device.blockSize - 4))) {
+        fail("/", "invalid block image", "EIO");
+      }
     }
+    if (this.#readInode(ROOT_INODE).type !== INODE_DIR) fail("/", "invalid block image", "EIO");
+    const reachable = new Set([ROOT_INODE]);
+    const pending = [ROOT_INODE];
+    while (pending.length) {
+      const inode = pending.pop();
+      if (this.#readInode(inode).type !== INODE_DIR) continue;
+      const names = new Set();
+      for (const entry of this.#dirEntries(inode)) {
+        if (
+          !allocated.has(entry.inode) ||
+          entry.name === "." ||
+          entry.name === ".." ||
+          entry.name.includes("/") ||
+          names.has(entry.name) ||
+          reachable.has(entry.inode)
+        ) {
+          fail("/", "invalid block image", "EIO");
+        }
+        names.add(entry.name);
+        reachable.add(entry.inode);
+        pending.push(entry.inode);
+      }
+    }
+    if (reachable.size !== allocated.size) fail("/", "invalid block image", "EIO");
   }
 
   #inodeView(inode) {
@@ -212,37 +260,36 @@ export class BlockFS {
 
   #writeFileBytes(inode, bytes) {
     const previous = this.#readInode(inode);
-    this.#releaseChain(previous.direct);
     if (!bytes.length) {
+      this.#releaseChain(previous.direct);
       this.#writeInode(inode, { ...previous, size: 0, direct: 0, mtime: Date.now() >>> 0 });
       return;
     }
     const payload = this.#device.blockSize - 4;
-    let remaining = bytes.length;
-    let offset = 0;
-    let first = 0;
-    let prev = 0;
-    while (remaining > 0) {
-      const block = this.#allocBlock();
-      if (!first) first = block;
-      const buf = new Uint8Array(this.#device.blockSize);
-      const take = Math.min(payload, remaining);
-      buf.set(bytes.subarray(offset, offset + take));
-      if (prev) {
-        const linked = this.#device.read(prev);
-        u32(new DataView(linked.buffer, linked.byteOffset, linked.byteLength), this.#device.blockSize - 4, block);
-        this.#device.write(prev, linked);
-      }
-      this.#device.write(block, buf);
-      prev = block;
-      offset += take;
-      remaining -= take;
+    const blocks = [];
+    for (let block = previous.direct; block; ) {
+      blocks.push(block);
+      block = u32(this.#view, block * this.#device.blockSize + this.#device.blockSize - 4);
     }
-    this.#writeInode(inode, { ...previous, size: bytes.length, direct: first, mtime: Date.now() >>> 0 });
+    const required = Math.ceil(bytes.length / payload);
+    if (required - blocks.length > this.#free.size) fail("/", "no free blocks", "ENOSPC");
+    while (blocks.length < required) blocks.push(this.#allocBlock());
+    for (let index = 0; index < required; index++) {
+      const buf = new Uint8Array(this.#device.blockSize);
+      buf.set(bytes.subarray(index * payload, (index + 1) * payload));
+      u32(new DataView(buf.buffer), this.#device.blockSize - 4, blocks[index + 1] ?? 0);
+      this.#device.write(blocks[index], buf);
+    }
+    for (const block of blocks.slice(required)) {
+      this.#device.zero(block);
+      this.#free.add(block);
+    }
+    this.#writeInode(inode, { ...previous, size: bytes.length, direct: blocks[0], mtime: Date.now() >>> 0 });
   }
 
   #dirEntries(inode) {
     const bytes = this.#readFileBytes(inode);
+    if (bytes.length % DIR_ENTRY_BYTES) fail("/", "invalid block image", "EIO");
     const entries = [];
     for (let at = 0; at + DIR_ENTRY_BYTES <= bytes.length; at += DIR_ENTRY_BYTES) {
       const child = u32(new DataView(bytes.buffer, bytes.byteOffset + at, 4), 0);
@@ -327,18 +374,28 @@ export class BlockFS {
   }
 
   read(path, cwd = "/") {
+    return this.#decoder.decode(this.readBytes(path, cwd));
+  }
+
+  readBytes(path, cwd = "/") {
     path = this.resolve(cwd, path);
     const inode = this.#lookup(path);
     if (this.#readInode(inode).type === INODE_DIR) fail(path, "Is a directory", "EISDIR");
-    return this.#decoder.decode(this.#readFileBytes(inode));
+    return this.#readFileBytes(inode);
   }
 
   write(path, value, cwd = "/") {
+    return this.writeBytes(path, this.#encoder.encode(String(value)), cwd);
+  }
+
+  writeBytes(path, value, cwd = "/") {
     path = this.resolve(cwd, path);
-    value = String(value);
+    if (!(value instanceof Uint8Array)) throw new TypeError("value must be Uint8Array");
+    value = value.slice();
+    if (path === "/") fail(path, "Is a directory", "EISDIR");
     const parentPath = this.parent(path);
     const name = this.basename(path);
-    if (name.length >= NAME_BYTES) fail(path, "File name too long", "ENAMETOOLONG");
+    if (this.#encoder.encode(name).length >= NAME_BYTES) fail(path, "File name too long", "ENAMETOOLONG");
     const parent = this.#lookup(parentPath);
     if (this.#readInode(parent).type !== INODE_DIR) fail(path, "Not a directory", "ENOTDIR");
     const entries = this.#dirEntries(parent);
@@ -347,16 +404,32 @@ export class BlockFS {
       if (this.#readInode(inode).type === INODE_DIR) fail(path, "Is a directory", "EISDIR");
     } else {
       inode = this.#allocInode(INODE_FILE);
-      entries.push({ name, inode });
-      this.#writeDirEntries(parent, entries);
+      try {
+        this.#writeFileBytes(inode, value);
+        this.#writeDirEntries(parent, [...entries, { name, inode }]);
+      } catch (error) {
+        this.#releaseChain(this.#readInode(inode).direct);
+        this.#writeInode(inode, { type: INODE_FREE, size: 0, links: 0, mtime: 0, direct: 0 });
+        throw error;
+      }
+      return path;
     }
-    this.#writeFileBytes(inode, this.#encoder.encode(value));
+    this.#writeFileBytes(inode, value);
     return path;
   }
 
   append(path, value, cwd = "/") {
+    return this.appendBytes(path, this.#encoder.encode(String(value)), cwd);
+  }
+
+  appendBytes(path, value, cwd = "/") {
     path = this.resolve(cwd, path);
-    return this.write(path, (this.exists(path) ? this.read(path) : "") + value);
+    if (!(value instanceof Uint8Array)) throw new TypeError("value must be Uint8Array");
+    const previous = this.exists(path) ? this.readBytes(path) : new Uint8Array();
+    const joined = new Uint8Array(previous.length + value.length);
+    joined.set(previous);
+    joined.set(value, previous.length);
+    return this.writeBytes(path, joined);
   }
 
   mkdir(path, { cwd = "/", parents = false } = {}) {
@@ -372,11 +445,17 @@ export class BlockFS {
       this.mkdir(parentPath, { parents: true });
     }
     const name = this.basename(path);
-    if (name.length >= NAME_BYTES) fail(path, "File name too long", "ENAMETOOLONG");
+    if (this.#encoder.encode(name).length >= NAME_BYTES) fail(path, "File name too long", "ENAMETOOLONG");
     const parent = this.#lookup(parentPath);
     const inode = this.#allocInode(INODE_DIR);
-    this.#writeDirEntries(parent, [...this.#dirEntries(parent), { name, inode }]);
-    this.#writeDirEntries(inode, []);
+    try {
+      this.#writeDirEntries(inode, []);
+      this.#writeDirEntries(parent, [...this.#dirEntries(parent), { name, inode }]);
+    } catch (error) {
+      this.#releaseChain(this.#readInode(inode).direct);
+      this.#writeInode(inode, { type: INODE_FREE, size: 0, links: 0, mtime: 0, direct: 0 });
+      throw error;
+    }
     return path;
   }
 
@@ -440,3 +519,37 @@ export class BlockFS {
 }
 
 export const createBlockFS = (options) => new BlockFS(options?.device ?? options, options);
+
+export const openBlockFS = async (fileHandle, { blockSize = 4096, blocks = 256 } = {}) => {
+  if (!fileHandle?.getFile || !fileHandle?.createWritable) throw new TypeError("fileHandle must be writable");
+  const device = new BlockDevice({ blockSize, blocks });
+  const size = device.buffer.byteLength;
+  const file = await fileHandle.getFile();
+  if (file.size !== 0 && file.size !== size) throw new Error(`block image must be ${size} bytes`);
+  if (file.size) {
+    const image = await file.arrayBuffer();
+    if (image.byteLength !== size) throw new Error(`block image must be ${size} bytes`);
+    new Uint8Array(device.buffer).set(new Uint8Array(image));
+  }
+  const fs = new BlockFS(device, { format: file.size === 0 });
+  let pending = Promise.resolve();
+  return Object.freeze({
+    device,
+    fs,
+    flush() {
+      const image = device.buffer.slice(0);
+      const write = pending.then(async () => {
+        const writable = await fileHandle.createWritable();
+        try {
+          await writable.write(image);
+          await writable.close();
+        } catch (error) {
+          await writable.abort?.();
+          throw error;
+        }
+      });
+      pending = write.catch(() => {});
+      return write;
+    },
+  });
+};

@@ -15,7 +15,7 @@ await mkdir("wasm", { recursive: true });
 await copyFile("target/wasm32v1-none/release/shell_js.wasm", "wasm/shell.wasm");
 await chmod("wasm/shell.wasm", 0o644);
 await build({
-  entryPoints: ["javascripts/index.js"],
+  entryPoints: ["javascripts/classic.js"],
   bundle: true,
   define: { "import.meta.url": "globalThis.location.href" },
   format: "iife",
