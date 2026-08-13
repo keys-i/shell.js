@@ -1,11 +1,12 @@
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
+const kradAddDigest = "d6f47a8df8691ada08f49fac71b77f3b8dbb061c92041acf00988d34e25d8bcf";
 const script =
   typeof document === "undefined" ? globalThis.location?.href : (document.currentScript?.src ?? import.meta.url);
-const defaultURL = () => {
+const defaultURL = (name = "shell.wasm") => {
   const base = script || globalThis.location?.href;
   if (!base) throw new TypeError("WebAssembly URL is required outside a browser");
-  return new URL("../wasm/shell.wasm", base);
+  return new URL(`../wasm/${name}`, base);
 };
 
 const instantiate = async (source, fetcher) => {
@@ -71,4 +72,65 @@ export const createWasm = (setting, options = {}) => {
       return Boolean(exports);
     },
   });
+};
+
+export const createKradAdd = ({ url, fetch: fetcher = globalThis.fetch } = {}) => {
+  if (typeof fetcher !== "function") throw new TypeError("Krad requires fetch");
+  const source = url ?? defaultURL("krad-add.wasm");
+  let loading;
+  const load = (signal) => {
+    if (!loading) {
+      loading = (async () => {
+        const response = await fetcher(source, {
+          credentials: "omit",
+          redirect: "error",
+          referrerPolicy: "no-referrer",
+          signal,
+        });
+        if (!response.ok) throw new Error(`Krad request failed: ${response.status}`);
+        const reader = response.body?.getReader();
+        if (!reader) throw new Error("Krad response has no body");
+        const buffer = new Uint8Array(4096);
+        let length = 0;
+        try {
+          for (;;) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            if (length + value.byteLength > buffer.byteLength) {
+              await reader.cancel().catch(() => {});
+              throw new RangeError("Krad module is too large");
+            }
+            buffer.set(value, length);
+            length += value.byteLength;
+          }
+        } finally {
+          reader.releaseLock();
+        }
+        const bytes = buffer.subarray(0, length);
+        const digest = [...new Uint8Array(await globalThis.crypto.subtle.digest("SHA-256", bytes))]
+          .map((byte) => byte.toString(16).padStart(2, "0"))
+          .join("");
+        if (digest !== kradAddDigest) throw new Error("Krad module failed integrity verification");
+        const module = await WebAssembly.compile(bytes);
+        if (WebAssembly.Module.imports(module).length) throw new Error("Krad module imports are not allowed");
+        const instance = await WebAssembly.instantiate(module);
+        if (typeof instance.exports.krad_add !== "function") throw new Error("unsupported Krad ABI");
+        return instance.exports.krad_add;
+      })().catch((error) => {
+        loading = null;
+        throw error;
+      });
+    }
+    return loading;
+  };
+  return async (args, { signal } = {}) => {
+    if (
+      !Array.isArray(args) ||
+      args.length !== 2 ||
+      args.some((value) => !/^[+-]?\d+$/.test(value) || Number(value) < -2147483648 || Number(value) > 2147483647)
+    ) {
+      return { code: 2, stderr: "usage: krad-add INTEGER INTEGER\n" };
+    }
+    return `${(await load(signal))(Number(args[0]), Number(args[1]))}\n`;
+  };
 };
