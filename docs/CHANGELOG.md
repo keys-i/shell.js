@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- add a verified standalone Krad WebAssembly command
+
 ## [0.3.0](https://github.com/keys-i/shell.js/compare/v0.2.0...v0.3.0) - 2026-08-01
 
 ### Added

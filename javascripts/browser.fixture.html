@@ -33,8 +33,10 @@
 
   window.browserReport = (async () => {
     assert(typeof ShellJS?.createShell === "function", "classic global missing");
+    assert(typeof ShellJS.createKradAdd === "function", "Krad command missing");
     const esm = await import("./index.js");
     assert(typeof esm.createShell === "function", "ES module missing");
+    assert(typeof esm.createKradAdd === "function", "ES module Krad command missing");
     assert((await esm.createShell().exec("echo esm")).stdout === "esm\n", "ES module command failed");
     const coldMs = performance.now() - window.fixtureStart;
 
@@ -46,7 +48,10 @@
     const shell = ShellJS.createShell({
       profile: "freebsd",
       limits: { maxRuntimeMs: 2_000 },
-      commands: { hang: () => new Promise(() => {}) },
+      commands: {
+        hang: () => new Promise(() => {}),
+        "krad-add": ShellJS.createKradAdd(),
+      },
       manuals: { base: "/missing/" },
     });
     const ui = ShellJS.mountShell(root, shell, {
@@ -72,6 +77,7 @@
     assert(input.value === "echo koala", "history up failed");
     key(input, "ArrowDown");
     assert(input.value === "", "history down failed");
+    assert((await submit("krad-add 20 22")).stdout === "42\n", "Krad command failed");
     input.value = "unam";
     key(input, "Tab");
     assert(input.value === "uname", "completion failed");

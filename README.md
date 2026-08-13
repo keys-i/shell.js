@@ -19,16 +19,17 @@ A small, safe shell engine that can sit behind any web terminal UI.
 ES modules expose the same headless API:
 
 ```js
-import { createShell, createManuals, mountShell, profiles } from "./javascripts/index.js";
+import { createKradAdd, createManuals, createShell, mountShell, profiles } from "./javascripts/index.js";
 
 const shell = createShell({
   profile: profiles.linux,
   files: { "/etc/motd": "recovery ready\n" },
   manuals: createManuals({ base: "/manuals/", profile: "linux" }),
+  commands: { "krad-add": createKradAdd() },
   wasm: "auto",
 });
 
-const { code, stdout, stderr } = await shell.exec("cat /etc/motd");
+const { code, stdout, stderr } = await shell.exec("krad-add 20 22");
 ```
 
 The engine provides quotes, escapes, variables, assignments, `;`, `&&`, `||`,
@@ -53,6 +54,14 @@ deliberately outside this small library.
 The optional Rust WebAssembly module accelerates large literal line filters.
 It is lazy, import-free, and has a JavaScript fallback. Short commands do not
 fetch or instantiate Wasm. `await shell.prepare("wasm")` warms it explicitly.
+
+`createKradAdd()` registers Krad's pinned `krad-add.wasm` through the existing
+custom-command boundary. The 70-byte module is fetched lazily, digest-checked,
+limited to 4 KiB, and rejected if it imports host capabilities or lacks the
+expected function. It is built by the standalone Rust/LLVM/WASI SDK Krad
+workspace without a third-party transpiler dependency. This fixture proves the
+package boundary; it is not a compiler, libc, native-ISA translator, or
+Linux/BSD distribution.
 
 ## Manuals
 
