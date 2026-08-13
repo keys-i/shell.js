@@ -1,0 +1,7 @@
+Repository: https://github.com/keys-i/krad
+Merged as: 145b9affc6ae259e258237b3e2b20acca910c870
+Source commit: 55367f8ad006e18ac6c4c8c760641569975b1bba
+Source path: dist/krad-add.wasm
+SHA-256: d6f47a8df8691ada08f49fac71b77f3b8dbb061c92041acf00988d34e25d8bcf
+Compiler: WASI SDK 33 / Clang 22.1.0, wasm32-unknown-unknown, -nostdlib
+License: MIT

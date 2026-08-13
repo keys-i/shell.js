@@ -9,3 +9,4 @@ export { loadElf } from "./elf.js";
 export { runElf, runElfAsync } from "./vm.js";
 export { createManuals } from "./man.js";
 export { mountShell } from "./ui.js";
+export { createKradAdd } from "./wasm.js";

@@ -24,7 +24,7 @@ import { loadElf } from "../../javascripts/elf.js";
 import { MemoryFS, createShell, profiles } from "../../javascripts/shell.js";
 import { createSyscalls } from "../../javascripts/syscall.js";
 import { runElf, runElfAsync } from "../../javascripts/vm.js";
-import { createWasm } from "../../javascripts/wasm.js";
+import { createKradAdd, createWasm } from "../../javascripts/wasm.js";
 import { buildManuals, licenseHeader, validateManual } from "./manuals.js";
 
 const run = async (shell, command) => {
@@ -657,6 +657,44 @@ if (existsSync("wasm/shell.wasm")) {
   assert.equal(wasm.filter("koala", "koa"), "koala\n");
 }
 
+if (existsSync("wasm/krad-add.wasm")) {
+  const bytes = readFileSync("wasm/krad-add.wasm");
+  let requests = 0;
+  const krad = createShell({
+    commands: {
+      "krad-add": createKradAdd({
+        url: "https://example.test/krad-add.wasm",
+        fetch: async () => {
+          requests++;
+          return new Response(bytes);
+        },
+      }),
+    },
+  });
+  assert.equal((await krad.exec("krad-add nope 22")).code, 2);
+  assert.equal(requests, 0);
+  assert.equal((await run(krad, "krad-add 20 22")).stdout, "42\n");
+  assert.equal((await run(krad, "krad-add -1 2")).stdout, "1\n");
+  assert.equal(requests, 1);
+
+  const corrupted = Uint8Array.from(bytes);
+  corrupted[corrupted.length - 1] ^= 1;
+  for (const [body, error] of [
+    [corrupted, /integrity verification/],
+    [new Uint8Array(4097), /module is too large/],
+  ]) {
+    const unsafe = createShell({
+      commands: {
+        "krad-add": createKradAdd({
+          url: "https://example.test/krad-add.wasm",
+          fetch: async () => new Response(body),
+        }),
+      },
+    });
+    assert.match((await unsafe.exec("krad-add 20 22")).stderr, error);
+  }
+}
+
 if (existsSync("javascripts/shell.min.js")) {
   const context = {
     AbortController,
@@ -669,6 +707,7 @@ if (existsSync("javascripts/shell.min.js")) {
   };
   runInNewContext(readFileSync("javascripts/shell.min.js", "utf8"), context);
   assert.equal(typeof context.ShellJS.createShell, "function");
+  assert.equal(typeof context.ShellJS.createKradAdd, "function");
   const classicX86 = context.ShellJS.createX86({ onSyscall: () => null });
   classicX86.load(Uint8Array.of(0x0f, 0x05));
   classicX86.run();

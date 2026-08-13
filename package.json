@@ -7,6 +7,7 @@
   "sideEffects": false,
   "exports": {
     ".": "./javascripts/index.js",
+    "./krad-add.wasm": "./wasm/krad-add.wasm",
     "./wasm": "./wasm/shell.wasm",
     "./manuals/*": "./manuals/*"
   },
@@ -35,6 +36,8 @@
     "kernels/lib.rs",
     "manuals",
     "docs/MANUAL_SOURCES.md",
+    "wasm/krad-add.SOURCE",
+    "wasm/krad-add.wasm",
     "wasm/shell.wasm",
     "Cargo.lock",
     "Cargo.toml",
