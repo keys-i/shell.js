@@ -32,7 +32,7 @@ linked inside generated Wasm:
 - 1 MiB literal filter: JavaScript 284, Wasm 964 operations/second (239.7% faster)
 - x86-64: 50.02 ms (49.74–63.06) interpreter vs 0.65 ms (0.62–1.47) JIT (76.59×)
 - AArch64: 53.59 ms (52.93–62.39) interpreter vs 0.63 ms (0.61–1.07) JIT (84.84×)
-- classic build: 71,745 bytes raw / 23,543 bytes gzip
+- classic build: 73,475 bytes raw / 24,183 bytes gzip
 
 Representative range on Node 26.5.0 / Apple Silicon (2026-07-31):
 

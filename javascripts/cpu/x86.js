@@ -214,9 +214,10 @@ export class X86Cpu {
 
     if (opcode >= 0x50 && opcode <= 0x57) {
       const reg = (rex.b ? 8 : 0) | (opcode & 7);
+      const value = this.#regs.get(reg);
       const rsp = this.#regs.get(REG.rsp) - 8n;
       this.#regs.set(REG.rsp, rsp);
-      this.#memory.u64(rsp, this.#regs.get(reg));
+      this.#memory.u64(rsp, value);
       this.#steps += 1;
       return true;
     }
@@ -224,8 +225,9 @@ export class X86Cpu {
     if (opcode >= 0x58 && opcode <= 0x5f) {
       const reg = (rex.b ? 8 : 0) | (opcode & 7);
       const rsp = this.#regs.get(REG.rsp);
-      this.#regs.set(reg, this.#memory.u64(rsp));
+      const value = this.#memory.u64(rsp);
       this.#regs.set(REG.rsp, rsp + 8n);
+      this.#regs.set(reg, value);
       this.#steps += 1;
       return true;
     }

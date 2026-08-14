@@ -6,7 +6,7 @@ const fail = (path, message, code = "EINVAL") => {
 
 const SUPER = 0;
 const MAGIC = 0x53484c42; // SHLB
-const VERSION = 1;
+const VERSION = 2;
 const INODE_FREE = 0;
 const INODE_FILE = 1;
 const INODE_DIR = 2;
@@ -14,6 +14,7 @@ const ROOT_INODE = 1;
 const INODE_BYTES = 32;
 const DIR_ENTRY_BYTES = 32;
 const NAME_BYTES = 24;
+const now = () => Math.floor(Date.now() / 1000);
 
 const u32 = (view, at, value) => {
   if (value === undefined) return view.getUint32(at, true);
@@ -131,7 +132,7 @@ export class BlockFS {
       type: INODE_DIR,
       size: 0,
       links: 1,
-      mtime: Date.now() >>> 0,
+      mtime: now(),
       direct: rootData,
     });
     this.#writeDirEntries(ROOT_INODE, []);
@@ -217,7 +218,7 @@ export class BlockFS {
   #allocInode(type) {
     for (let inode = ROOT_INODE; inode < this.#inodeCount; inode++) {
       if (this.#readInode(inode).type === INODE_FREE) {
-        this.#writeInode(inode, { type, size: 0, links: 1, mtime: Date.now() >>> 0, direct: 0 });
+        this.#writeInode(inode, { type, size: 0, links: 1, mtime: now(), direct: 0 });
         return inode;
       }
     }
@@ -262,7 +263,7 @@ export class BlockFS {
     const previous = this.#readInode(inode);
     if (!bytes.length) {
       this.#releaseChain(previous.direct);
-      this.#writeInode(inode, { ...previous, size: 0, direct: 0, mtime: Date.now() >>> 0 });
+      this.#writeInode(inode, { ...previous, size: 0, direct: 0, mtime: now() });
       return;
     }
     const payload = this.#device.blockSize - 4;
@@ -284,7 +285,7 @@ export class BlockFS {
       this.#device.zero(block);
       this.#free.add(block);
     }
-    this.#writeInode(inode, { ...previous, size: bytes.length, direct: blocks[0], mtime: Date.now() >>> 0 });
+    this.#writeInode(inode, { ...previous, size: bytes.length, direct: blocks[0], mtime: now() });
   }
 
   #dirEntries(inode) {
@@ -391,7 +392,6 @@ export class BlockFS {
   writeBytes(path, value, cwd = "/") {
     path = this.resolve(cwd, path);
     if (!(value instanceof Uint8Array)) throw new TypeError("value must be Uint8Array");
-    value = value.slice();
     if (path === "/") fail(path, "Is a directory", "EISDIR");
     const parentPath = this.parent(path);
     const name = this.basename(path);
@@ -400,9 +400,14 @@ export class BlockFS {
     if (this.#readInode(parent).type !== INODE_DIR) fail(path, "Not a directory", "ENOTDIR");
     const entries = this.#dirEntries(parent);
     let inode = entries.find((entry) => entry.name === name)?.inode;
-    if (inode) {
-      if (this.#readInode(inode).type === INODE_DIR) fail(path, "Is a directory", "EISDIR");
-    } else {
+    const previous = inode && this.#readInode(inode);
+    if (previous?.type === INODE_DIR) fail(path, "Is a directory", "EISDIR");
+    const payload = this.#device.blockSize - 4;
+    if (value.length > (Math.ceil((previous?.size ?? 0) / payload) + this.#free.size) * payload) {
+      fail(path, "no free blocks", "ENOSPC");
+    }
+    value = value.slice();
+    if (!inode) {
       inode = this.#allocInode(INODE_FILE);
       try {
         this.#writeFileBytes(inode, value);
@@ -426,6 +431,10 @@ export class BlockFS {
     path = this.resolve(cwd, path);
     if (!(value instanceof Uint8Array)) throw new TypeError("value must be Uint8Array");
     const previous = this.exists(path) ? this.readBytes(path) : new Uint8Array();
+    const payload = this.#device.blockSize - 4;
+    if (value.length > (Math.ceil(previous.length / payload) + this.#free.size) * payload - previous.length) {
+      fail(path, "no free blocks", "ENOSPC");
+    }
     const joined = new Uint8Array(previous.length + value.length);
     joined.set(previous);
     joined.set(value, previous.length);
@@ -499,7 +508,7 @@ export class BlockFS {
     path = this.resolve(cwd, path);
     if (!this.exists(path)) return this.write(path, "");
     const inode = this.#lookup(path);
-    this.#writeInode(inode, { ...this.#readInode(inode), mtime: Date.now() >>> 0 });
+    this.#writeInode(inode, { ...this.#readInode(inode), mtime: now() });
     return path;
   }
 

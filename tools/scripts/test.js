@@ -193,6 +193,17 @@ assert.throws(() => createShell({ capabilities: null }), /capabilities must be a
   assert.equal(request.url, "https://api.example/data");
   assert.equal(request.options.credentials, "omit");
   assert.equal(request.options.redirect, "error");
+  const redirected = createNetwork({
+    origins: ["https://api.example"],
+    fetch: async () => ({
+      body: null,
+      headers: new Headers(),
+      status: 200,
+      statusText: "OK",
+      url: "https://denied.example/",
+    }),
+  });
+  await assert.rejects(() => redirected.fetch("https://api.example"), /origin denied/);
   await assert.rejects(() => network.fetch("https://denied.example"), /origin denied/);
   await assert.rejects(() => network.fetch("https://user:secret@api.example/data"), /credentials are denied/);
   assert.throws(() => createNetwork({ origins: ["https://user:secret@api.example"] }), /cannot contain credentials/);
@@ -750,8 +761,21 @@ console.log("shell.js core: ok");
   const tight = new BlockFS(new BlockDevice({ blockSize: 256, blocks: 8 }));
   tight.write("/keep", "old");
   tight.writeBytes("/full", new Uint8Array(4 * 252));
-  assert.throws(() => tight.writeBytes("/keep", new Uint8Array(253)), /no free blocks/);
+  const oversized = new Uint8Array(253);
+  oversized.slice = () => {
+    throw new Error("copied before capacity check");
+  };
+  assert.throws(() => tight.writeBytes("/keep", oversized), /no free blocks/);
+  assert.throws(() => tight.appendBytes("/keep", oversized), /no free blocks/);
   assert.equal(tight.read("/keep"), "old");
+  const clock = Date.now;
+  Date.now = () => 1_786_646_229_956;
+  try {
+    tight.touch("/keep");
+    assert.equal(tight.stat("/keep").mtime, 1_786_646_229_000);
+  } finally {
+    Date.now = clock;
+  }
   const aliasDisk = new BlockDevice({ blockSize: 512, blocks: 64 });
   const aliasFs = new BlockFS(aliasDisk);
   aliasFs.writeBytes(
@@ -893,6 +917,15 @@ console.log("shell.js core: ok");
   sib.memory.u64(65_528n, 42n);
   sib.step();
   assert.equal(sib.registers().rax, 42n);
+
+  const stackPointer = createX86();
+  stackPointer.load(Uint8Array.of(0x54, 0x5c)); // push rsp; pop rsp
+  stackPointer.reset({ rsp: 0x100n });
+  stackPointer.step();
+  assert.equal(stackPointer.memory.u64(0xf8n), 0x100n);
+  stackPointer.memory.u64(0xf8n, 0x80n);
+  stackPointer.step();
+  assert.equal(stackPointer.registers().rsp, 0x80n);
 
   const relative = createX86();
   relative.load(Uint8Array.from([0x48, 0x8b, 0x05, 0, 0, 0, 0])); // mov rax, [rip]
@@ -1860,6 +1893,17 @@ console.log("shell.js core: ok");
   interpretedView.setBigUint64(152, 11n, true);
   interpreted.set(new TextEncoder().encode("/lib/ld.so\0"), 0xe0);
   assert.equal(loadElf(interpreted, createX86().memory).interpreter, "/lib/ld.so");
+  assert.throws(() => runElf(interpreted, { resolveInterpreter: true }), /must be a function/);
+  assert.throws(() => runElf(interpreted), /interpreter not found/);
+  assert.throws(() => runElf(interpreted, { resolveInterpreter: async () => x86Image }), /must be synchronous/);
+  assert.throws(
+    () => runElf(interpreted, { interpreterBase: 0n, resolveInterpreter: () => armImage }),
+    /architecture mismatch/,
+  );
+  assert.throws(
+    () => runElf(interpreted, { interpreterBase: 0n, resolveInterpreter: () => interpreted }),
+    /nested ELF interpreter/,
+  );
   const duplicateInterpreter = interpreted.slice();
   const duplicateView = new DataView(duplicateInterpreter.buffer);
   duplicateView.setUint16(56, 3, true);

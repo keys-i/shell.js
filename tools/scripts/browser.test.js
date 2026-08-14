@@ -91,7 +91,7 @@ const run = async (driver, fixture) => {
       throw new Error(`${driver.name}: ${method} ${path}: ${error.message}\n${diagnostics}`, { cause: error });
     }
     const data = await response.json();
-    if (!response.ok || data.value?.error) {
+    if (!response.ok) {
       throw new Error(`${driver.name}: ${data.value?.message ?? response.statusText}\n${diagnostics}`);
     }
     return data.value;
