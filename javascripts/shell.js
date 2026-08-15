@@ -1,9 +1,12 @@
 import { createBuiltins } from "./commands.js";
+import { BlockFS } from "./block.js";
 import { createFS, MemoryFS } from "./fs.js";
 import { createManuals } from "./man.js";
 import { completionStart, expandWord, parse } from "./parser.js";
 import { profiles, resolveProfile } from "./profiles.js";
 import { createWasm } from "./wasm.js";
+
+const isFilesystem = (value) => value instanceof MemoryFS || value instanceof BlockFS;
 
 const commandName = /^[A-Za-z0-9][A-Za-z0-9._+-]*$/;
 const encoder = new TextEncoder();
@@ -69,14 +72,17 @@ export const createShell = ({
   env = {},
   files = {},
   commands: custom = {},
+  capabilities = {},
   manuals,
   wasm,
   limits: configured,
   signal: lifetime,
 } = {}) => {
+  if (!capabilities || typeof capabilities !== "object") throw new TypeError("capabilities must be an object");
+  capabilities = Object.freeze({ ...capabilities });
   const profile = resolveProfile(selected);
   const limits = limitOptions(configured);
-  const fs = files instanceof MemoryFS ? files : createFS(files, limits);
+  const fs = isFilesystem(files) ? files : createFS(files, limits);
   const state = {
     cwd: "/",
     env: {
@@ -131,6 +137,7 @@ export const createShell = ({
     if (!handler) return { code: 127, stdout: "", stderr: `${name}: command not found\n` };
     const context = {
       fs,
+      capabilities,
       profile,
       kernel: builtins.kernel,
       manuals,

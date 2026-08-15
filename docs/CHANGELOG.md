@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - add a verified standalone Krad WebAssembly command
+- run bounded Linux ELF64 guests with generated-Wasm x86-64/AArch64 hot blocks and separately composable Linux/FreeBSD syscall subsets
+- load ET_EXEC/ET_DYN images, resolve PT_INTERP, and support cancellable cooperative execution
+- persist the block filesystem through explicit OPFS flushes and expose an allowlisted browser network capability
+- run unmodified 32-bit x86 PC images through an optional injected v86 backend
 
 ## [0.3.0](https://github.com/keys-i/shell.js/compare/v0.2.0...v0.3.0) - 2026-08-01
 

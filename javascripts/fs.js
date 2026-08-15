@@ -1,5 +1,5 @@
 const encoder = new TextEncoder();
-const bytes = (value) => encoder.encode(value).length;
+const decoder = new TextDecoder();
 const fail = (path, message, code = "EINVAL") => {
   const error = new Error(`${path}: ${message}`);
   error.code = code;
@@ -65,39 +65,56 @@ export class MemoryFS {
     path = this.resolve(cwd, path);
     if (this.#dirs.has(path)) return { path, type: "directory", size: 0, mtime: this.#times.get(path) };
     if (this.#files.has(path)) {
-      return { path, type: "file", size: bytes(this.#files.get(path)), mtime: this.#times.get(path) };
+      return { path, type: "file", size: this.#files.get(path).length, mtime: this.#times.get(path) };
     }
     fail(path, "No such file or directory", "ENOENT");
   }
 
   read(path, cwd = "/") {
+    return decoder.decode(this.readBytes(path, cwd));
+  }
+
+  readBytes(path, cwd = "/") {
     path = this.resolve(cwd, path);
     if (this.#dirs.has(path)) fail(path, "Is a directory", "EISDIR");
     if (!this.#files.has(path)) fail(path, "No such file or directory", "ENOENT");
-    return this.#files.get(path);
+    return this.#files.get(path).slice();
   }
 
   write(path, value, cwd = "/") {
+    return this.writeBytes(path, encoder.encode(String(value)), cwd);
+  }
+
+  writeBytes(path, value, cwd = "/") {
     path = this.resolve(cwd, path);
-    value = String(value);
-    const size = bytes(value);
+    if (!(value instanceof Uint8Array)) throw new TypeError("value must be Uint8Array");
+    const size = value.length;
     if (size > this.#limits.maxFileBytes) fail(path, "file quota exceeded", "EDQUOT");
     if (this.#dirs.has(path)) fail(path, "Is a directory", "EISDIR");
     if (!this.#dirs.has(this.parent(path))) fail(path, "No such directory", "ENOENT");
-    const previous = this.#files.has(path) ? bytes(this.#files.get(path)) : 0;
+    const previous = this.#files.get(path)?.length ?? 0;
     if (!this.#files.has(path)) this.#reserve(1);
     if (this.#total - previous + size > this.#limits.maxTotalBytes) {
       fail(path, "filesystem quota exceeded", "EDQUOT");
     }
-    this.#files.set(path, value);
+    this.#files.set(path, value.slice());
     this.#times.set(path, Date.now());
     this.#total += size - previous;
     return path;
   }
 
   append(path, value, cwd = "/") {
+    return this.appendBytes(path, encoder.encode(String(value)), cwd);
+  }
+
+  appendBytes(path, value, cwd = "/") {
     path = this.resolve(cwd, path);
-    return this.write(path, (this.#files.get(path) ?? "") + value);
+    if (!(value instanceof Uint8Array)) throw new TypeError("value must be Uint8Array");
+    const previous = this.#files.get(path) ?? new Uint8Array();
+    const joined = new Uint8Array(previous.length + value.length);
+    joined.set(previous);
+    joined.set(value, previous.length);
+    return this.writeBytes(path, joined);
   }
 
   mkdir(path, { cwd = "/", parents = false } = {}) {
@@ -142,7 +159,7 @@ export class MemoryFS {
     if (path === "/") fail(path, "cannot remove root", "EPERM");
     if (path === cwd || cwd.startsWith(`${path}/`)) fail(path, "Device busy", "EBUSY");
     if (this.#files.has(path)) {
-      this.#total -= bytes(this.#files.get(path));
+      this.#total -= this.#files.get(path).length;
       this.#files.delete(path);
       this.#times.delete(path);
       return;
@@ -153,7 +170,7 @@ export class MemoryFS {
     if (children.length && !recursive) fail(path, "Directory not empty", "ENOTEMPTY");
     for (const file of [...this.#files.keys()]) {
       if (file.startsWith(prefix)) {
-        this.#total -= bytes(this.#files.get(file));
+        this.#total -= this.#files.get(file).length;
         this.#files.delete(file);
         this.#times.delete(file);
       }

@@ -19,6 +19,21 @@ instead of treated as a noisy shared-runner pass/fail signal.
 Chromium, Firefox, and a 4× CPU-throttled mobile Chromium profile. Its
 correctness assertions gate CI; shared-runner timings remain informational.
 
+`npm run benchmark` also reports seven-sample median/range timings for equivalent
+200,000-iteration decrement/branch loops in x86-64 and AArch64 with the
+interpreter and hot-block JIT. These subset microbenchmarks are not full-system
+or competitor claims.
+
+Node 26.7.0 on Apple Silicon (2026-08-13), after hot backward branches were
+linked inside generated Wasm:
+
+- simple command: 80,219 operations/second
+- parse/control pipeline: 64,874 operations/second
+- 1 MiB literal filter: JavaScript 284, Wasm 964 operations/second (239.7% faster)
+- x86-64: 50.02 ms (49.74–63.06) interpreter vs 0.65 ms (0.62–1.47) JIT (76.59×)
+- AArch64: 53.59 ms (52.93–62.39) interpreter vs 0.63 ms (0.61–1.07) JIT (84.84×)
+- classic build: 73,475 bytes raw / 24,183 bytes gzip
+
 Representative range on Node 26.5.0 / Apple Silicon (2026-07-31):
 
 - simple pipeline: 80,000–82,000 operations/second

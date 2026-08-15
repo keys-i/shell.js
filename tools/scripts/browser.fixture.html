@@ -15,7 +15,7 @@
 </section>
 <button id="sentinel" type="button">sentinel</button>
 <script>window.fixtureStart = performance.now()</script>
-<script src="./shell.min.js"></script>
+<script src="/javascripts/shell.min.js"></script>
 <script type="module">
   const assert = (value, message) => {
     if (!value) throw new Error(message);
@@ -34,7 +34,7 @@
   window.browserReport = (async () => {
     assert(typeof ShellJS?.createShell === "function", "classic global missing");
     assert(typeof ShellJS.createKradAdd === "function", "Krad command missing");
-    const esm = await import("./index.js");
+    const esm = await import("/javascripts/index.js");
     assert(typeof esm.createShell === "function", "ES module missing");
     assert(typeof esm.createKradAdd === "function", "ES module Krad command missing");
     assert((await esm.createShell().exec("echo esm")).stdout === "esm\n", "ES module command failed");
@@ -137,7 +137,7 @@
     await delay();
     assert(delayedOutput.textContent === "preserved", "destroy left listeners attached");
 
-    const worker = new Worker("./worker.fixture.js");
+    const worker = new Worker("/tools/scripts/worker.fixture.js");
     const workerResult = await new Promise((resolve, reject) => {
       const timeout = setTimeout(() => reject(new Error("worker timed out")), 5_000);
       worker.onmessage = ({ data }) => {

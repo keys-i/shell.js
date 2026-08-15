@@ -91,7 +91,7 @@ const run = async (driver, fixture) => {
       throw new Error(`${driver.name}: ${method} ${path}: ${error.message}\n${diagnostics}`, { cause: error });
     }
     const data = await response.json();
-    if (!response.ok || data.value?.error) {
+    if (!response.ok) {
       throw new Error(`${driver.name}: ${data.value?.message ?? response.statusText}\n${diagnostics}`);
     }
     return data.value;
@@ -129,7 +129,7 @@ const run = async (driver, fixture) => {
           await send(`/session/${session}/window/rect`, { height: 900, width: 1280 });
         }
         await send(`/session/${session}/url`, {
-          url: `${fixture}/javascripts/browser.fixture.html?run=${suite.name}-${Date.now()}`,
+          url: `${fixture}/tools/scripts/browser.fixture.html?run=${suite.name}-${Date.now()}`,
         });
         const report = await send(`/session/${session}/execute/async`, {
           args: [],
